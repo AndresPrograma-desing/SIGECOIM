@@ -42,14 +42,14 @@ export const createComodato = async (req, res) => {
 
     if (!folio_contrato || !fecha_devolucion_prevista || !estudiante_id || !instrumento_id) {
       await t.rollback();
-      return res.status(400).json({ error: 'Folio, fecha prevista de devolución, estudiante e instrumento son requeridos.' });
+      return res.status(400).json({ error: 'Correlativo, fecha prevista de devolución, estudiante e instrumento son requeridos.' });
     }
 
-    // Validar duplicado de folio
+    // Validar duplicado de correlativo
     const existeFolio = await Comodato.findOne({ where: { folio_contrato } });
     if (existeFolio) {
       await t.rollback();
-      return res.status(400).json({ error: 'El folio de contrato ya se encuentra registrado.' });
+      return res.status(400).json({ error: 'El correlativo de contrato ya se encuentra registrado.' });
     }
 
     // Validar que el estudiante exista
@@ -194,12 +194,12 @@ export const updateComodato = async (req, res) => {
       return res.status(400).json({ error: 'Solo se pueden editar comodatos que se encuentren activos.' });
     }
 
-    // Validar duplicado de folio si se está cambiando
+    // Validar duplicado de correlativo si se está cambiando
     if (folio_contrato && folio_contrato !== comodato.folio_contrato) {
       const existeFolio = await Comodato.findOne({ where: { folio_contrato }, transaction: t });
       if (existeFolio) {
         await t.rollback();
-        return res.status(400).json({ error: 'El folio de contrato ya se encuentra registrado.' });
+        return res.status(400).json({ error: 'El correlativo de contrato ya se encuentra registrado.' });
       }
       comodato.folio_contrato = folio_contrato;
     }

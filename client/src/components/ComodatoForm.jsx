@@ -20,9 +20,9 @@ const ComodatoForm = ({
         <Alert severity="error">{formError}</Alert>
       )}
 
-      {/* Folio del Contrato */}
+      {/* Correlativo del Contrato */}
       <TextField
-        label="Folio del Contrato"
+        label="Correlativo del Contrato"
         name="folio_contrato"
         value={newComodato.folio_contrato || ''}
         onChange={handleChange}

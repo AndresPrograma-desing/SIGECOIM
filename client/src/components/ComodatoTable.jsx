@@ -31,7 +31,7 @@ const ComodatoTable = ({ comodatos, onDevolucion, onEdit, onDelete }) => {
       <Table>
         <TableHead sx={{ backgroundColor: 'action.hover' }}>
           <TableRow>
-            <TableCell><Typography fontWeight="bold">Folio</Typography></TableCell>
+            <TableCell><Typography fontWeight="bold">Correlativo</Typography></TableCell>
             <TableCell><Typography fontWeight="bold">Estudiante / Rep.</Typography></TableCell>
             <TableCell><Typography fontWeight="bold">Instrumento</Typography></TableCell>
             <TableCell><Typography fontWeight="bold">Plazo</Typography></TableCell>
