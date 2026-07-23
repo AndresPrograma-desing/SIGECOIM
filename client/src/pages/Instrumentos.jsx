@@ -205,7 +205,7 @@ const Instrumentos = () => {
 
       {/* Tabla de Resultados */}
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', py: 8 }}>
           <CircularProgress />
         </Box>
       ) : (
