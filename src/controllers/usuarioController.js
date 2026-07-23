@@ -146,7 +146,7 @@ export const deleteUsuario = async (req, res) => {
     
     // Opcional: Impedir que se elimine el administrador principal
     if (usuario.email === 'admin@sigecoim.com') {
-      return res.status(400).json({ error: 'No se puede eliminar al administrador principal del sistema.' });
+      return res.status(400).json({ error: 'No se puede eliminar al ana principal del sistema.' });
     }
 
     await usuario.destroy();

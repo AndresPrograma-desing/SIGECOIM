@@ -26,6 +26,14 @@ export const connectDB = async () => {
     // Sincronizar automáticamente el esquema de DB (agregar columnas faltantes)
     await sequelize.sync({ alter: true });
     console.log(' Esquema de base de datos verificado y actualizado.');
+
+    // Migración automática de roles
+    try {
+      await sequelize.query("UPDATE USUARIO SET rol = 'ANALISTA_BIENES' WHERE rol = 'ADMINISTRADOR'");
+      console.log(' Migración de roles completada con éxito.');
+    } catch (migError) {
+      console.log(' Omitiendo actualización de roles (la tabla o campo ya se encuentra actualizado).');
+    }
   } catch (error) {
     console.error('Error de conexión a la base de datos:', error.message);
     process.exit(1);

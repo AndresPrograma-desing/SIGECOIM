@@ -77,7 +77,7 @@ function App() {
         >
           {activePage === 'instrumentos' && <Instrumentos />}
           {activePage === 'comodatos' && <Comodatos />}
-          {activePage === 'usuarios' && user?.rol === 'ADMINISTRADOR' && <Usuarios />}
+          {activePage === 'usuarios' && user?.rol === 'ANALISTA_BIENES' && <Usuarios />}
         </Box>
       </Box>
     </ThemeProvider>

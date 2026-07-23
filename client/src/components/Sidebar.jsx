@@ -1,11 +1,11 @@
 import React from 'react';
 import { Drawer, Box, Typography, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { Music, ClipboardList, Users } from 'lucide-react';
-import BrandMark from './illustrations/BrandMark';
+import logo1 from '../assets/img/Logo1.jpeg';
 import { ink } from '../theme/colors';
 
 const Sidebar = ({ activePage, setActivePage, drawerWidth, user }) => {
-  const isAdmin = user?.rol === 'ADMINISTRADOR';
+  const isAdmin = user?.rol === 'ANALISTA_BIENES';
 
   return (
     <Drawer
@@ -27,27 +27,16 @@ const Sidebar = ({ activePage, setActivePage, drawerWidth, user }) => {
       <Box
         sx={{
           display: 'flex',
+          justifyContent: 'center',
           alignItems: 'center',
-          gap: 1.5,
           mx: 2,
           my: 3,
-          px: 2,
-          py: 2.5,
+          p: 1.5,
           borderRadius: '10px',
           backgroundColor: 'rgba(255, 255, 255, 0.05)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <BrandMark size={28} />
-        </Box>
-        <Box>
-          <Typography variant="h6" fontWeight="bold" color="#ffffff" sx={{ lineHeight: 1.2 }}>
-            SIGECOIM
-          </Typography>
-          <Typography variant="caption" color="rgba(255, 255, 255, 0.6)" sx={{ fontSize: '0.62rem', fontWeight: 600, letterSpacing: '0.05em' }}>
-            SINFÓNICA INFANTIL
-          </Typography>
-        </Box>
+        <img src={logo1} alt="Logo" style={{ height: 48, width: '100%', objectFit: 'contain', borderRadius: '6px' }} />
       </Box>
 
       <Divider sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)', mx: 2, mb: 2 }} />
@@ -120,7 +109,7 @@ const Sidebar = ({ activePage, setActivePage, drawerWidth, user }) => {
           </ListItemButton>
         </ListItem>
 
-        {/* Usuarios (Exclusivo para ADMINISTRADOR) */}
+        {/* Usuarios (Exclusivo para ANALISTA_BIENES) */}
         {isAdmin && (
           <ListItem disablePadding sx={{ mb: 1.5 }}>
             <ListItemButton

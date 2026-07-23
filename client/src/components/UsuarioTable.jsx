@@ -39,7 +39,7 @@ const UsuarioTable = ({ usuarios, onToggleState, onEdit, onDelete }) => {
             </TableRow>
           ) : (
             usuarios.map((usr) => {
-              const isAdmin = usr.rol === 'ADMINISTRADOR';
+              const isAdmin = usr.rol === 'ANALISTA_BIENES';
               const initials = usr.nombre
                 ? usr.nombre
                     .split(' ')
@@ -74,7 +74,7 @@ const UsuarioTable = ({ usuarios, onToggleState, onEdit, onDelete }) => {
                   <TableCell>
                     <Chip
                       icon={isAdmin ? <Shield size={14} /> : <ShieldAlert size={14} />}
-                      label={isAdmin ? 'ADMINISTRADOR' : 'COORDINADOR'}
+                      label={isAdmin ? 'ANALISTA DE BIENES' : 'COORDINADOR'}
                       size="small"
                       sx={{
                         backgroundColor: isAdmin ? 'primary.main' : 'warning.light',

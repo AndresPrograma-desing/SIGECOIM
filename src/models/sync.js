@@ -17,7 +17,7 @@ const syncDatabase = async () => {
       nombre: 'Administrador General',
       email: 'admin@sigecoim.com',
       password: hashedPassword,
-      rol: 'ADMINISTRADOR',
+      rol: 'ANALISTA_BIENES',
       estado: true,
     });
 

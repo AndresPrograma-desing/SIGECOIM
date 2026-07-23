@@ -59,7 +59,7 @@ const UsuarioForm = ({ formData, onChangeForm, formError, isEdit }) => {
           notched
         >
           <MenuItem value="COORDINADOR">Coordinador (Operador)</MenuItem>
-          <MenuItem value="ADMINISTRADOR">Administrador General</MenuItem>
+          <MenuItem value="ANALISTA_BIENES">Analista de Bienes</MenuItem>
         </Select>
       </FormControl>
     </Box>

@@ -27,7 +27,7 @@ const Topbar = ({ user, onLogout, drawerWidth }) => {
               {user.nombre}
             </Typography>
             <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
-              {user.email} • {user.rol}
+              {user.email} • {user.rol === 'ANALISTA_BIENES' ? 'Analista de Bienes' : user.rol === 'ADMINISTRADOR' ? 'Administrador' : 'Coordinador'}
             </Typography>
           </Box>
           <UserAvatar nombre={user.nombre} />

@@ -12,7 +12,8 @@ import {
 } from '@mui/material';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
-import BrandMark from '../components/illustrations/BrandMark';
+import logo1 from '../assets/img/Logo1.jpeg';
+import logo2 from '../assets/img/Logo2.jpeg';
 import LoginArt from '../components/illustrations/LoginArt';
 import { ink, surface } from '../theme/colors';
 
@@ -71,7 +72,7 @@ const Login = ({ onLoginSuccess }) => {
         </Box>
 
         <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <BrandMark size={30} />
+          <img src={logo1} alt="Logo" style={{ height: 32, width: 'auto', objectFit: 'contain', borderRadius: '4px' }} />
           <Typography variant="subtitle1" fontWeight={700} sx={{ letterSpacing: '0.02em' }}>
             SIGECOIM
           </Typography>
@@ -124,10 +125,22 @@ const Login = ({ onLoginSuccess }) => {
               color: ink.main,
             }}
           >
-            <BrandMark size={30} />
+            <img src={logo1} alt="Logo" style={{ height: 32, width: 'auto', objectFit: 'contain', borderRadius: '4px' }} />
             <Typography variant="h5" fontWeight={700}>
               SIGECOIM
             </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+            <img 
+              src={logo2} 
+              alt="Logo Principal" 
+              style={{ 
+                height: 85, 
+                objectFit: 'contain',
+                mixBlendMode: 'multiply'
+              }} 
+            />
           </Box>
 
           <Typography variant="h3" sx={{ mb: 1, fontSize: { xs: '1.7rem', sm: '2rem' }, fontWeight: 700, color: ink.main }}>
