@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const SEMI = ({ value, onChange }) => {
+const SEMI = ({ value, onChange, label = "Fecha *" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(new Date());
 
@@ -92,7 +92,7 @@ const SEMI = ({ value, onChange }) => {
     <>
       {/* Input de MUI en lugar del input nativo */}
       <TextField
-        label="Fecha de Devolución Prevista *"
+        label={label}
         value={formatDateToShow(value)}
         onClick={() => setIsOpen(true)}
         placeholder="Seleccione una fecha..."

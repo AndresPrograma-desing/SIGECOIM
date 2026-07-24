@@ -56,7 +56,7 @@ const syncDatabase = async () => {
     });
 
     await Estudiante.create({
-      cedula: null,
+      cedula: 'V-31000999',
       nombre: 'Ana',
       apellido: 'Pérez',
       fecha_nacimiento: '2014-08-20',

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Box, TextField, Typography, Divider, Grid, Alert } from '@mui/material';
+import SEMI from './Calendario';
 
 const EstudianteForm = ({
   formData,
@@ -61,26 +62,21 @@ const EstudianteForm = ({
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
-            label="Cédula (Opcional)"
+            label="Cédula"
             name="cedula"
             value={formData.cedula || ''}
             onChange={handleChange}
             fullWidth
+            required
             placeholder="Ej: V-30123456"
             variant="outlined"
           />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField
-            label="Fecha de Nacimiento"
-            name="fecha_nacimiento"
-            type="date"
+          <SEMI
+            label="Fecha de Nacimiento *"
             value={formData.fecha_nacimiento || ''}
-            onChange={handleChange}
-            fullWidth
-            required
-            variant="outlined"
-            InputLabelProps={{ shrink: true }}
+            onChange={(val) => setFormData((prev) => ({ ...prev, fecha_nacimiento: val }))}
           />
         </Grid>
         <Grid item xs={12} sm={6}>

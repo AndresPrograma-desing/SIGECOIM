@@ -119,10 +119,10 @@ const Estudiantes = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { nombre, apellido, fecha_nacimiento } = formData;
+    const { cedula, nombre, apellido, fecha_nacimiento } = formData;
 
-    if (!nombre.trim() || !apellido.trim() || !fecha_nacimiento) {
-      setFormError('Nombre, Apellido y Fecha de Nacimiento son requeridos.');
+    if (!cedula.trim() || !nombre.trim() || !apellido.trim() || !fecha_nacimiento) {
+      setFormError('Cédula, Nombre, Apellido y Fecha de Nacimiento son requeridos.');
       return;
     }
 

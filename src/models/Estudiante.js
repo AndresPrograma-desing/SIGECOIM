@@ -9,7 +9,7 @@ const Estudiante = sequelize.define('ESTUDIANTE', {
   },
   cedula: {
     type: DataTypes.STRING(20),
-    allowNull: true,
+    allowNull: false,
     unique: true,
   },
   nombre: {
