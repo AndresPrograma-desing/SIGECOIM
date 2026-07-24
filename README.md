@@ -189,3 +189,42 @@ El sistema incorpora un resolvedor dinámico en `api.js` y un middleware de CORS
 2.  **Por Túneles de Desarrollo (Dev Tunnels):**
     *   Si utilizas Dev Tunnels, debes exponer tanto el puerto del frontend (`5173`) como el del backend (`3003`) en modo público.
     *   Al ingresar a la URL del túnel del frontend (ej: `https://g27frlv5-5173.use2.devtunnels.ms`), el sistema enrutará las peticiones a la API del túnel del backend (`https://g27frlv5-3003.use2.devtunnels.ms/api`) sin generar bloqueos de seguridad.
+
+---
+
+## 📁 Estructura del Código y Carpetas
+
+A continuación se detalla la organización de los directorios tanto en el servidor (Backend) como en la aplicación del cliente (Frontend):
+
+### 1. Servidor (Backend)
+En la carpeta raíz del proyecto, el código se agrupa dentro del directorio `src/`:
+*   `src/config/`: Contiene la configuración de conexión a la base de datos MySQL mediante Sequelize ORM (`db.js`).
+*   `src/middleware/`: Middlewares globales de Express. Destaca `auth.js` que se encarga de descifrar y validar los tokens JWT enviados desde el frontend para proteger las rutas privadas.
+*   `src/models/`: Definición de los modelos de base de datos relacionales con Sequelize:
+    *   `Usuario.js`: Credenciales y roles.
+    *   `Representante.js`: Datos del representante comodatario.
+    *   `Estudiante.js`: Datos del estudiante beneficiario.
+    *   `Instrumento.js`: Inventario y disponibilidad de instrumentos.
+    *   `Comodato.js`: Contratos de préstamo activos e históricos.
+    *   `Devolucion.js`: Control del retorno físico de instrumentos.
+    *   `index.js`: Define y exporta todas las asociaciones de base de datos (uno a muchos, uno a uno).
+    *   `sync.js`: Script ejecutable independiente para inicializar tablas y sembrar datos de prueba.
+*   `src/controllers/`: Contiene la lógica del negocio que interactúa con la base de datos y resuelve las peticiones HTTP de los endpoints (e.g., `comodatoController.js`, `estudianteController.js`).
+*   `src/routes/`: Enrutadores de Express que exponen los endpoints y los vinculan a sus respectivos controladores (e.g., `estudianteRoutes.js`).
+*   `server.js`: El archivo de arranque principal en la raíz que inicializa Express, configura los middlewares de seguridad CORS y las cabeceras, y enciende el listener del servidor.
+
+### 2. Cliente (Frontend)
+El código de la aplicación de React se encuentra agrupado en la carpeta `client/src/`:
+*   `client/src/assets/`: Contiene recursos multimedia, logos e imágenes estáticas del sistema (`Logo1.jpeg`, `Logo2.jpeg`).
+*   `client/src/components/`: Componentes modulares y reutilizables de React:
+    *   `Calendario.jsx` (SEMI): Calendario interactivo personalizado utilizado como selector de fechas en formularios.
+    *   `Topbar.jsx`: Barra superior con el perfil del usuario y el botón de cierre de sesión.
+    *   `Sidebar.jsx`: Menú lateral interactivo con acceso a las vistas de acuerdo a los roles de usuario.
+    *   `DrawPanel.jsx`: Contenedor flotante lateral que desliza los formularios de creación/edición.
+    *   `ConfirmDialog.jsx`: Ventanas modales para confirmar acciones críticas de borrado.
+    *   `ComodatoForm.jsx`, `EstudianteForm.jsx`, `InstrumentoDialog.jsx`, `UsuarioForm.jsx`: Formularios especializados de entrada de datos.
+    *   `ComodatoTable.jsx`, `EstudianteTable.jsx`, `InstrumentoTable.jsx`, `UsuarioTable.jsx`: Tablas interactivas que renderizan y ordenan la información de la base de datos.
+*   `client/src/pages/`: Páginas completas del sistema que orquestan los componentes y consumen la API (e.g., `Login.jsx`, `Estudiantes.jsx`, `Comodatos.jsx`).
+*   `client/src/services/`: Configuración del cliente HTTP Axios (`api.js`) encargado de establecer la URL base y adjuntar de forma dinámica los headers de autorización JWT para las llamadas al backend.
+*   `client/src/theme/`: Configuración del tema visual de Material UI (colores corporativos de la Sinfónica, tipografías y estilos generales).
+*   `client/src/App.jsx`: Componente principal que orquesta el enrutamiento interno de las páginas del panel y la validación de la sesión activa del usuario.
