@@ -6,6 +6,7 @@ import { surface } from './theme/colors';
 import Instrumentos from './pages/Instrumentos';
 import Comodatos from './pages/Comodatos';
 import Usuarios from './pages/Usuarios';
+import Estudiantes from './pages/Estudiantes';
 import Login from './pages/Login';
 import Topbar from './components/Topbar';
 import Sidebar from './components/Sidebar';
@@ -76,6 +77,7 @@ function App() {
           }}
         >
           {activePage === 'instrumentos' && <Instrumentos />}
+          {activePage === 'estudiantes' && <Estudiantes />}
           {activePage === 'comodatos' && <Comodatos />}
           {activePage === 'usuarios' && user?.rol === 'ANALISTA_BIENES' && <Usuarios />}
         </Box>

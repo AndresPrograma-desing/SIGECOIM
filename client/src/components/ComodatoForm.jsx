@@ -1,5 +1,4 @@
-import React from 'react';
-import { Box, TextField, MenuItem, Alert, FormControl, InputLabel, Select } from '@mui/material';
+import { Box, TextField, MenuItem, Alert, FormControl, InputLabel, Select, Typography } from '@mui/material';
 import SEMI from './Calendario';
 
 const ComodatoForm = ({
@@ -13,6 +12,23 @@ const ComodatoForm = ({
     const { name, value } = e.target;
     setNewComodato((prev) => ({ ...prev, [name]: value }));
   };
+
+  // Buscar el estudiante seleccionado
+  const selectedEst = estudiantes.find(est => (est.id_estudiante || est.id) === newComodato.estudiante_id);
+  
+  // Calcular si es menor de edad y su edad
+  let esMenor = false;
+  let age = null;
+  if (selectedEst && selectedEst.fecha_nacimiento) {
+    const birthDate = new Date(selectedEst.fecha_nacimiento);
+    const today = new Date();
+    age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    esMenor = age < 18;
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -51,11 +67,44 @@ const ComodatoForm = ({
           )}
           {estudiantes.map((est) => (
             <MenuItem key={est.id_estudiante || est.id} value={est.id_estudiante || est.id}>
-              {est.nombre} {est.apellido} - CI: {est.cedula}
+              {est.nombre} {est.apellido} - CI: {est.cedula || 'S/N'}
             </MenuItem>
           ))}
         </Select>
       </FormControl>
+
+      {/* Caja de información del representante */}
+      {selectedEst && (
+        <Box sx={{ 
+          mt: -1, 
+          p: 2, 
+          borderRadius: '10px', 
+          backgroundColor: esMenor ? 'rgba(226, 88, 62, 0.08)' : 'rgba(15, 23, 42, 0.04)',
+          border: esMenor ? '1px solid rgba(226, 88, 62, 0.2)' : '1px solid rgba(15, 23, 42, 0.08)',
+        }}>
+          {esMenor ? (
+            <>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'secondary.main', mb: 0.5 }}>
+                Menor de Edad ({age} años) - Requiere Representante Legal
+              </Typography>
+              {selectedEst.representante ? (
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5 }}>
+                  <strong>Representante:</strong> {selectedEst.representante.nombre} {selectedEst.representante.apellido} <br />
+                  <strong>Cédula:</strong> {selectedEst.representante.cedula} | <strong>Telf:</strong> {selectedEst.representante.telefono}
+                </Typography>
+              ) : (
+                <Typography variant="body2" color="error" sx={{ fontWeight: 500 }}>
+                  ⚠️ Este estudiante no posee un representante asociado en su perfil. Edita sus datos en el módulo de Estudiantes.
+                </Typography>
+              )}
+            </>
+          ) : (
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+              🎉 Mayor de Edad ({age} años) - Actúa en representación propia (Comodatario)
+            </Typography>
+          )}
+        </Box>
+      )}
 
       {/* Selector de Instrumento */}
       <FormControl fullWidth required variant="outlined">

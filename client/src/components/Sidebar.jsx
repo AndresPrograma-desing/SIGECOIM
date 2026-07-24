@@ -1,6 +1,6 @@
 import React from 'react';
 import { Drawer, Box, Typography, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
-import { Music, ClipboardList, Users } from 'lucide-react';
+import { Music, ClipboardList, Users, GraduationCap } from 'lucide-react';
 import logo1 from '../assets/img/Logo1.jpeg';
 import { ink } from '../theme/colors';
 
@@ -103,6 +103,39 @@ const Sidebar = ({ activePage, setActivePage, drawerWidth, user }) => {
               primary="Comodatos"
               primaryTypographyProps={{
                 fontWeight: activePage === 'comodatos' ? 'bold' : 'normal',
+                color: '#ffffff',
+              }}
+            />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Estudiantes */}
+        <ListItem disablePadding sx={{ mb: 1.5 }}>
+          <ListItemButton
+            selected={activePage === 'estudiantes'}
+            onClick={() => setActivePage('estudiantes')}
+            sx={{
+              borderRadius: '6px',
+              '&.Mui-selected': {
+                backgroundColor: 'rgba(232, 93, 78, 0.16)',
+                borderLeft: '4px solid #E85D4E',
+                color: '#ffffff',
+                '& .MuiListItemIcon-root': {
+                  color: '#F3846F',
+                },
+              },
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40, color: activePage === 'estudiantes' ? '#F3846F' : 'rgba(255, 255, 255, 0.6)' }}>
+              <GraduationCap size={20} />
+            </ListItemIcon>
+            <ListItemText
+              primary="Estudiantes"
+              primaryTypographyProps={{
+                fontWeight: activePage === 'estudiantes' ? 'bold' : 'normal',
                 color: '#ffffff',
               }}
             />
