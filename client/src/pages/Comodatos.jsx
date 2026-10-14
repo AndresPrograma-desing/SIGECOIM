@@ -1,296 +1,328 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Alert, CircularProgress, Snackbar, Button } from '@mui/material';
-import { Plus } from 'lucide-react';
-import api from '../services/api';
-import ComodatoForm from '../components/ComodatoForm';
-import ComodatoTable from '../components/ComodatoTable';
-import DevolucionForm from '../components/DevolucionForm'; // <-- Renombramos el componente
-import DrawPanel from '../components/DrawPanel';
-import ConfirmDialog from '../components/ConfirmDialog';
+import { useEffect, useMemo, useState } from 'react';
+import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, CalendarPicker, MultilinePlaceholder, Barnner } from 'anteriority-ui';
+import { Plus, Pencil, Trash2, Undo2 } from 'lucide-react';
+import { getComodatos, createComodato, updateComodato, deleteComodato, registrarDevolucion } from '../services/comodatos';
+import { getEstudiantes } from '../services/estudiantes';
+import { getInstrumentos } from '../services/instrumentos';
+import { esMenorDeEdad } from '../utils/edad';
+import { tableColors } from '../theme/tokens';
+import { COMMON, COMODATOS as TXT, INSTRUMENTOS } from '../constants/text';
 
-const Comodatos = () => {
+const FORM_INICIAL = {
+  folio_contrato: '',
+  fecha_inicio: '',
+  fecha_devolucion_prevista: '',
+  estudiante_id: '',
+  instrumento_id: '',
+};
+
+function badgeTypeEstado(row) {
+  if (row.estado === 'ACTIVO') return 'success';
+  if (row.estado === 'VENCIDO') return 'danger';
+  return 'warning';
+}
+
+export default function Comodatos() {
   const [comodatos, setComodatos] = useState([]);
   const [estudiantes, setEstudiantes] = useState([]);
   const [instrumentos, setInstrumentos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [filtroEstado, setFiltroEstado] = useState('');
 
-  // Estado para el panel lateral de registro
-  const [isDrawOpen, setIsDrawOpen] = useState(false);
-
-  // Formulario Comodato
-  const [newComodato, setNewComodato] = useState({
-    folio_contrato: '',
-    fecha_devolucion_prevista: '',
-    estudiante_id: '',
-    instrumento_id: '',
-  });
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [formData, setFormData] = useState(FORM_INICIAL);
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  // Estado para el panel lateral de DEVOLUCIÓN
-  const [isDevolucionDrawOpen, setIsDevolucionDrawOpen] = useState(false);
-  const [selectedComodato, setSelectedComodato] = useState(null);
-  const [devolucionData, setDevolucionData] = useState({
-    estado_instrumento_recibido: 'BUENO',
-    observaciones: '',
-  });
-  const [devFormError, setDevFormError] = useState('');
+  const [aEliminar, setAEliminar] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
-  // Notificaciones
-  const [notification, setNotification] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [devolucionDe, setDevolucionDe] = useState(null);
+  const [devolucionData, setDevolucionData] = useState({ estado_instrumento_recibido: 'BUENO', observaciones: '' });
+  const [devolucionError, setDevolucionError] = useState('');
+  const [devolviendo, setDevolviendo] = useState(false);
 
-  const fetchData = async () => {
+  const cargar = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const [comRes, estRes, instRes] = await Promise.all([
-        api.get('/comodatos'),
-        api.get('/estudiantes'),
-        api.get('/instrumentos'),
+      const [comodatosData, estudiantesData, instrumentosData] = await Promise.all([
+        getComodatos(),
+        getEstudiantes(),
+        getInstrumentos(),
       ]);
-      setComodatos(comRes.data);
-      setEstudiantes(estRes.data);
-      setInstrumentos(instRes.data);
-      setError('');
+      setComodatos(comodatosData);
+      setEstudiantes(estudiantesData);
+      setInstrumentos(instrumentosData);
     } catch (err) {
-      console.error(err);
-      setError('No se pudo cargar la información de préstamos.');
+      setError(err.message || TXT.loadError);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    cargar();
   }, []);
 
-  const [editingComodato, setEditingComodato] = useState(null);
+  const estudianteSeleccionado = estudiantes.find((e) => String(e.id) === String(formData.estudiante_id));
 
-  const handleOpenEdit = (com) => {
-    setEditingComodato(com);
-    setNewComodato({
-      folio_contrato: com.folio_contrato,
-      fecha_devolucion_prevista: com.fecha_devolucion_prevista,
-      estudiante_id: com.estudiante_id,
-      instrumento_id: com.instrumento_id,
-    });
+  const opcionesEstudiantes = estudiantes.map((e) => ({ value: e.id, label: `${e.nombre} ${e.apellido}` }));
+  const opcionesInstrumentos = instrumentos
+    .filter((i) => i.estado_disponibilidad === 'DISPONIBLE' || i.id === editando?.instrumento_id)
+    .map((i) => ({ value: i.id, label: `${i.nombre} (${i.codigo_inventario})` }));
+
+  const abrirNuevo = () => {
+    setEditando(null);
+    setFormData(FORM_INICIAL);
     setFormError('');
-    setIsDrawOpen(true);
+    setPanelOpen(true);
   };
 
-  const handleOpenCreate = () => {
-    setEditingComodato(null);
-    setNewComodato({
-      folio_contrato: '',
-      fecha_devolucion_prevista: '',
-      estudiante_id: '',
-      instrumento_id: '',
+  const abrirEditar = (comodato) => {
+    setEditando(comodato);
+    setFormData({
+      folio_contrato: comodato.folio_contrato || '',
+      fecha_inicio: comodato.fecha_inicio || '',
+      fecha_devolucion_prevista: comodato.fecha_devolucion_prevista || '',
+      estudiante_id: comodato.estudiante_id || '',
+      instrumento_id: comodato.instrumento_id || '',
     });
     setFormError('');
-    setIsDrawOpen(true);
+    setPanelOpen(true);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { folio_contrato, fecha_devolucion_prevista, estudiante_id, instrumento_id } = newComodato;
-
-    if (!folio_contrato || !fecha_devolucion_prevista || !estudiante_id || !instrumento_id) {
-      setFormError('Todos los campos son obligatorios.');
-      return;
-    }
-
+    setFormError('');
+    setSaving(true);
     try {
-      if (editingComodato) {
-        await api.put(`/comodatos/${editingComodato.id}`, {
-          folio_contrato,
-          fecha_devolucion_prevista,
-          estudiante_id,
-          instrumento_id,
-        });
-        showNotification('Comodato actualizado con éxito.', 'success');
+      if (editando) {
+        await updateComodato(editando.id, formData);
       } else {
-        await api.post('/comodatos', {
-          folio_contrato,
-          fecha_devolucion_prevista,
-          estudiante_id,
-          instrumento_id,
-        });
-        showNotification('Comodato registrado con éxito.', 'success');
+        await createComodato(formData);
       }
-      setIsDrawOpen(false);
-      fetchData();
+      setPanelOpen(false);
+      await cargar();
     } catch (err) {
-      console.error(err);
-      setFormError(err.response?.data?.error || 'Ocurrió un error al guardar el préstamo.');
-    }
-  };
-
-  const handleOpenDevolucion = (comodato) => {
-    setSelectedComodato(comodato);
-    setDevolucionData({
-      estado_instrumento_recibido: comodato.instrumento?.estado_conservacion || 'BUENO',
-      observaciones: '',
-    });
-    setDevFormError('');
-    setIsDevolucionDrawOpen(true); // Abre el Drawer de devolución
-  };
-
-  const handleCloseDevolucion = () => {
-    setIsDevolucionDrawOpen(false);
-    setSelectedComodato(null);
-  };
-
-  const handleChangeDevData = (field, value) => {
-    setDevolucionData({ ...devolucionData, [field]: value });
-  };
-
-  const handleSubmitDevolucion = async (e) => {
-    e.preventDefault();
-    if (!selectedComodato) return;
-
-    try {
-      await api.post(`/comodatos/${selectedComodato.id}/devolucion`, {
-        estado_instrumento_recibido: devolucionData.estado_instrumento_recibido,
-        observaciones: devolucionData.observaciones,
-      });
-
-      showNotification('Devolución procesada con éxito. Instrumento disponible.', 'success');
-      setIsDevolucionDrawOpen(false); // Cierra el Drawer
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      setDevFormError(err.response?.data?.error || 'Error al procesar la devolución.');
-    }
-  };
-
-  const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null });
-
-  const handleDeleteClick = (id) => {
-    setConfirmDialog({ open: true, id });
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!confirmDialog.id) return;
-    try {
-      const res = await api.delete(`/comodatos/${confirmDialog.id}`);
-      showNotification(res.data.message, 'success');
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      showNotification(err.response?.data?.error || 'No se pudo eliminar el préstamo.', 'error');
+      setFormError(err.message || TXT.saveError);
     } finally {
-      setConfirmDialog({ open: false, id: null });
+      setSaving(false);
     }
   };
 
-  const showNotification = (message, severity = 'success') => {
-    setNotification({ open: true, message, severity });
+  const confirmarEliminar = async () => {
+    setDeleteError('');
+    try {
+      await deleteComodato(aEliminar.id);
+      setAEliminar(null);
+      await cargar();
+    } catch (err) {
+      setDeleteError(err.message || TXT.deleteError);
+    }
   };
 
-  const handleCloseNotification = () => {
-    setNotification({ ...notification, open: false });
+  const abrirDevolucion = (comodato) => {
+    setDevolucionDe(comodato);
+    setDevolucionData({ estado_instrumento_recibido: comodato.instrumento?.estado_conservacion || 'BUENO', observaciones: '' });
+    setDevolucionError('');
   };
 
-  const availableInstruments = instrumentos.filter(
-    (inst) =>
-      inst.estado_disponibilidad === 'DISPONIBLE' ||
-      (editingComodato && inst.id === editingComodato.instrumento_id)
+  const confirmarDevolucion = async (e) => {
+    e.preventDefault();
+    setDevolucionError('');
+    setDevolviendo(true);
+    try {
+      await registrarDevolucion(devolucionDe.id, devolucionData);
+      setDevolucionDe(null);
+      await cargar();
+    } catch (err) {
+      setDevolucionError(err.message || TXT.devolucionError);
+    } finally {
+      setDevolviendo(false);
+    }
+  };
+
+  const dataFiltrada = filtroEstado ? comodatos.filter((c) => c.estado === filtroEstado) : comodatos;
+
+  const columns = useMemo(
+    () => [
+      { key: 'folio_contrato', label: TXT.columns.correlativo },
+      {
+        key: 'estudiante',
+        label: TXT.columns.estudiante,
+        render: (row) => `${row.estudiante?.nombre ?? ''} ${row.estudiante?.apellido ?? ''}`.trim() || COMMON.notAvailable,
+      },
+      { key: 'instrumento', label: TXT.columns.instrumento, render: (row) => row.instrumento?.nombre || COMMON.notAvailable },
+      { key: 'fecha_devolucion_prevista', label: TXT.columns.devolucionPrevista },
+      {
+        key: 'estado',
+        label: TXT.columns.estado,
+        type: 'badge',
+        badgeType: badgeTypeEstado,
+        filter: {
+          options: [{ value: '', label: COMMON.all }, ...TXT.estados],
+          value: filtroEstado,
+          onChange: setFiltroEstado,
+        },
+      },
+      {
+        key: 'actions',
+        label: COMMON.actions,
+        type: 'actions',
+        actions: [
+          { label: TXT.registrarDevolucion, icon: Undo2, onClick: abrirDevolucion, disabled: (row) => row.estado !== 'ACTIVO' },
+          { label: COMMON.edit, icon: Pencil, onClick: abrirEditar, disabled: (row) => row.estado !== 'ACTIVO' },
+          { label: COMMON.delete, icon: Trash2, onClick: setAEliminar },
+        ],
+      },
+    ],
+    [filtroEstado],
   );
 
   return (
-    <Box sx={{ p: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" fontWeight="600" color="primary.main">
-          Gestión de Comodatos (Préstamos)
-        </Typography>
-        <Button
-          variant="contained"
-          onClick={handleOpenCreate}
-          startIcon={<Plus size={18} />}
-        >
-          Registrar Préstamo
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
+          <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
+        </div>
+        <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
+          {TXT.newButton}
         </Button>
-      </Box>
+      </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Box sx={{ width: '100%' }}>
-          <ComodatoTable
-            comodatos={comodatos}
-            onDevolucion={handleOpenDevolucion}
-            onEdit={handleOpenEdit}
-            onDelete={handleDeleteClick}
-          />
-        </Box>
-      )}
-
-      {/* 1. Panel de Registrar/Editar Préstamo */}
-      <DrawPanel
-        width={500}
-        open={isDrawOpen}
-        onClose={() => setIsDrawOpen(false)}
-        title={editingComodato ? "Editar Préstamo" : "Registrar Préstamo"}
-        onSubmit={handleSubmit}
-      >
-        <ComodatoForm
-          newComodato={newComodato}
-          setNewComodato={setNewComodato}
-          estudiantes={estudiantes}
-          availableInstruments={availableInstruments}
-          formError={formError}
-        />
-      </DrawPanel>
-
-      {/* 2. Panel de Procesar Devolución */}
-      <DrawPanel
-        width={500}
-        open={isDevolucionDrawOpen}
-        onClose={handleCloseDevolucion}
-        title="Procesar Devolución"
-        onSubmit={handleSubmitDevolucion}
-      >
-        <DevolucionForm
-          selectedComodato={selectedComodato}
-          devolucionData={devolucionData}
-          onChangeDevData={handleChangeDevData}
-          formError={devFormError}
-        />
-      </DrawPanel>
-
-      {/* Diálogo de Confirmación para Eliminar */}
-      <ConfirmDialog
-        open={confirmDialog.open}
-        onClose={() => setConfirmDialog({ open: false, id: null })}
-        onConfirm={handleConfirmDelete}
-        title="Eliminar Préstamo"
-        message="¿Estás seguro de que deseas eliminar este préstamo? Si el préstamo estaba en estado ACTIVO, el instrumento volverá automáticamente a estar DISPONIBLE."
+      <TableB
+        columns={columns}
+        data={dataFiltrada}
+        rowKey="id"
+        loading={loading}
+        error={error}
+        onRetry={cargar}
+        emptyMessage={TXT.emptyMessage}
+        {...tableColors}
       />
 
-      {/* Alertas */}
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={4000}
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      <DrawPanel
+        isOpen={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        title={editando ? TXT.editTitle : TXT.newTitle}
+        showActions
+        formId="form-comodato"
+        confirmText={editando ? COMMON.save : COMMON.register}
+        loading={saving}
+        progressMode="form"
+        formData={formData}
+        requiredFields={['folio_contrato', 'fecha_devolucion_prevista', 'estudiante_id', 'instrumento_id']}
       >
-        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
-          {notification.message}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
-};
+        <form
+          id="form-comodato"
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
+          {formError && <Barnner type="danger">{formError}</Barnner>}
 
-export default Comodatos;
+          <TextField
+            label={TXT.fields.folioContrato}
+            name="folio_contrato"
+            value={formData.folio_contrato}
+            onChange={handleChange}
+            required
+            placeholder={TXT.fields.folioPlaceholder}
+          />
+
+          <Selector
+            label={TXT.fields.estudiante}
+            options={opcionesEstudiantes}
+            value={formData.estudiante_id}
+            onChange={(e) => handleChange({ target: { name: 'estudiante_id', value: e.target.value } })}
+            required
+          />
+
+          {estudianteSeleccionado && (
+            <Barnner type={esMenorDeEdad(estudianteSeleccionado.fecha_nacimiento) ? 'warning' : 'default'}>
+              {esMenorDeEdad(estudianteSeleccionado.fecha_nacimiento)
+                ? TXT.menorConRepresentante(estudianteSeleccionado.representante?.nombre, estudianteSeleccionado.representante?.apellido)
+                : TXT.mayorDeEdad}
+            </Barnner>
+          )}
+
+          <Selector
+            label={TXT.fields.instrumento}
+            options={opcionesInstrumentos}
+            value={formData.instrumento_id}
+            onChange={(e) => handleChange({ target: { name: 'instrumento_id', value: e.target.value } })}
+            required
+          />
+
+          <CalendarPicker
+            label={TXT.fields.fechaInicio}
+            name="fecha_inicio"
+            value={formData.fecha_inicio}
+            onChange={handleChange}
+          />
+          <CalendarPicker
+            label={TXT.fields.fechaDevolucionPrevista}
+            name="fecha_devolucion_prevista"
+            value={formData.fecha_devolucion_prevista}
+            onChange={handleChange}
+            required
+          />
+        </form>
+      </DrawPanel>
+
+      <DrawPanel
+        isOpen={Boolean(devolucionDe)}
+        onClose={() => setDevolucionDe(null)}
+        title={TXT.devolucionTitle}
+        description={devolucionDe ? TXT.devolucionDescription(devolucionDe.folio_contrato, devolucionDe.instrumento?.nombre) : ''}
+        showActions
+        formId="form-devolucion"
+        confirmText={TXT.devolucionConfirm}
+        loading={devolviendo}
+      >
+        <form
+          id="form-devolucion"
+          onSubmit={confirmarDevolucion}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
+          {devolucionError && <Barnner type="danger">{devolucionError}</Barnner>}
+
+          <Selector
+            label={TXT.fields.estadoInstrumentoRecibido}
+            options={INSTRUMENTOS.estadosConservacion}
+            value={devolucionData.estado_instrumento_recibido}
+            onChange={(e) => setDevolucionData((prev) => ({ ...prev, estado_instrumento_recibido: e.target.value }))}
+            required
+          />
+          <MultilinePlaceholder
+            label={TXT.fields.observaciones}
+            value={devolucionData.observaciones}
+            onChange={(e) => setDevolucionData((prev) => ({ ...prev, observaciones: e.target.value }))}
+            rows={4}
+          />
+        </form>
+      </DrawPanel>
+
+      <AlertModal
+        open={Boolean(aEliminar)}
+        title={TXT.deleteTitle}
+        message={deleteError || (aEliminar && TXT.deleteConfirm(aEliminar.folio_contrato, aEliminar.estado === 'ACTIVO'))}
+        confirmText={COMMON.delete}
+        cancelText={COMMON.cancel}
+        onClose={() => {
+          setAEliminar(null);
+          setDeleteError('');
+        }}
+        onConfirm={confirmarEliminar}
+      />
+    </div>
+  );
+}

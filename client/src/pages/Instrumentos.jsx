@@ -1,256 +1,231 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Alert, CircularProgress, Snackbar } from '@mui/material';
-import { Plus } from 'lucide-react';
-import api from '../services/api';
-import InstrumentoFilters from '../components/InstrumentoFilters';
-import InstrumentoTable from '../components/InstrumentoTable';
-import InstrumentoDialog from '../components/InstrumentoDialog';
-import ConfirmDialog from '../components/ConfirmDialog';
+import { useEffect, useMemo, useState } from 'react';
+import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, Barnner } from 'anteriority-ui';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { getInstrumentos, createInstrumento, updateInstrumento, deleteInstrumento } from '../services/instrumentos';
+import { tableColors } from '../theme/tokens';
+import { COMMON, INSTRUMENTOS as TXT } from '../constants/text';
 
-const Instrumentos = () => {
+const FORM_INICIAL = {
+  codigo_inventario: '',
+  nombre: '',
+  marca: '',
+  modelo: '',
+  numero_serie: '',
+  medida: '',
+  color: '',
+  accesorios: '',
+  estado_conservacion: 'BUENO',
+  estado_disponibilidad: 'DISPONIBLE',
+};
+
+function badgeTypeDisponibilidad(row) {
+  if (row.estado_disponibilidad === 'DISPONIBLE') return 'success';
+  if (row.estado_disponibilidad === 'MANTENIMIENTO') return 'warning';
+  return 'danger';
+}
+
+export default function Instrumentos() {
   const [instrumentos, setInstrumentos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [filtroDisponibilidad, setFiltroDisponibilidad] = useState('');
 
-  // Estados de Filtros
-  const [search, setSearch] = useState('');
-  const [filterDisponibilidad, setFilterDisponibilidad] = useState('');
-
-  // Estados de Modal (Crear/Editar)
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingInstrumento, setEditingInstrumento] = useState(null);
-  const [formData, setFormData] = useState({
-    codigo_inventario: '',
-    nombre: '',
-    marca: '',
-    modelo: '',
-    numero_serie: '',
-    medida: '',
-    color: '',
-    accesorios: '',
-    estado_conservacion: 'BUENO',
-    estado_disponibilidad: 'DISPONIBLE',
-  });
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [formData, setFormData] = useState(FORM_INICIAL);
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  // Notificaciones
-  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+  const [aEliminar, setAEliminar] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
-  const fetchInstrumentos = async () => {
+  const cargar = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await api.get('/instrumentos');
-      setInstrumentos(response.data);
-      setError('');
+      setInstrumentos(await getInstrumentos());
     } catch (err) {
-      console.error(err);
-      setError('No se pudo cargar la lista de instrumentos. Inténtelo de nuevo.');
+      setError(err.message || TXT.loadError);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInstrumentos();
+    cargar();
   }, []);
 
-  const handleOpenCreate = () => {
-    setEditingInstrumento(null);
+  const abrirNuevo = () => {
+    setEditando(null);
+    setFormData(FORM_INICIAL);
+    setFormError('');
+    setPanelOpen(true);
+  };
+
+  const abrirEditar = (instrumento) => {
+    setEditando(instrumento);
     setFormData({
-      codigo_inventario: '',
-      nombre: '',
-      marca: '',
-      modelo: '',
-      numero_serie: '',
-      medida: '',
-      color: '',
-      accesorios: '',
-      estado_conservacion: 'BUENO',
-      estado_disponibilidad: 'DISPONIBLE',
+      codigo_inventario: instrumento.codigo_inventario || '',
+      nombre: instrumento.nombre || '',
+      marca: instrumento.marca || '',
+      modelo: instrumento.modelo || '',
+      numero_serie: instrumento.numero_serie || '',
+      medida: instrumento.medida || '',
+      color: instrumento.color || '',
+      accesorios: instrumento.accesorios || '',
+      estado_conservacion: instrumento.estado_conservacion || 'BUENO',
+      estado_disponibilidad: instrumento.estado_disponibilidad || 'DISPONIBLE',
     });
     setFormError('');
-    setOpenDialog(true);
+    setPanelOpen(true);
   };
 
-  const handleOpenEdit = (inst) => {
-    setEditingInstrumento(inst);
-    setFormData({
-      codigo_inventario: inst.codigo_inventario,
-      nombre: inst.nombre,
-      marca: inst.marca || '',
-      modelo: inst.modelo || '',
-      numero_serie: inst.numero_serie || '',
-      medida: inst.medida || '',
-      color: inst.color || '',
-      accesorios: inst.accesorios || '',
-      estado_conservacion: inst.estado_conservacion,
-      estado_disponibilidad: inst.estado_disponibilidad,
-    });
-    setFormError('');
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
-
-  const handleChangeForm = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.codigo_inventario.trim() || !formData.nombre.trim()) {
-      setFormError('Código de Inventario y Nombre son requeridos.');
-      return;
-    }
-
+    setFormError('');
+    setSaving(true);
     try {
-      if (editingInstrumento) {
-        await api.put(`/instrumentos/${editingInstrumento.id}`, formData);
-        showNotification('Instrumento actualizado con éxito.', 'success');
+      if (editando) {
+        await updateInstrumento(editando.id, formData);
       } else {
-        await api.post('/instrumentos', formData);
-        showNotification('Instrumento creado con éxito.', 'success');
+        await createInstrumento(formData);
       }
-      setOpenDialog(false);
-      fetchInstrumentos();
+      setPanelOpen(false);
+      await cargar();
     } catch (err) {
-      console.error(err);
-      setFormError(err.response?.data?.error || 'Ocurrió un error al guardar el instrumento.');
-    }
-  };
-
-  const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null });
-
-  const handleDeleteClick = (id) => {
-    setConfirmDialog({ open: true, id });
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!confirmDialog.id) return;
-    try {
-      const res = await api.delete(`/instrumentos/${confirmDialog.id}`);
-      showNotification(res.data.message, 'success');
-      fetchInstrumentos();
-    } catch (err) {
-      console.error(err);
-      showNotification(err.response?.data?.error || 'No se pudo eliminar el instrumento.', 'error');
+      setFormError(err.message || TXT.saveError);
     } finally {
-      setConfirmDialog({ open: false, id: null });
+      setSaving(false);
     }
   };
 
-  const showNotification = (message, severity = 'success') => {
-    setNotification({ open: true, message, severity });
+  const confirmarEliminar = async () => {
+    setDeleteError('');
+    try {
+      await deleteInstrumento(aEliminar.id);
+      setAEliminar(null);
+      await cargar();
+    } catch (err) {
+      setDeleteError(err.message || TXT.deleteError);
+    }
   };
 
-  const handleCloseNotification = () => {
-    setNotification({ ...notification, open: false });
-  };
+  const dataFiltrada = filtroDisponibilidad
+    ? instrumentos.filter((i) => i.estado_disponibilidad === filtroDisponibilidad)
+    : instrumentos;
 
-  const filteredInstrumentos = instrumentos.filter((inst) => {
-    const matchText =
-      inst.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      inst.codigo_inventario.toLowerCase().includes(search.toLowerCase()) ||
-      (inst.marca && inst.marca.toLowerCase().includes(search.toLowerCase())) ||
-      (inst.modelo && inst.modelo.toLowerCase().includes(search.toLowerCase()));
-
-    const matchDisponibilidad = filterDisponibilidad ? inst.estado_disponibilidad === filterDisponibilidad : true;
-
-    return matchText && matchDisponibilidad;
-  });
+  const columns = useMemo(
+    () => [
+      { key: 'codigo_inventario', label: TXT.columns.codigo },
+      { key: 'nombre', label: TXT.columns.instrumento, render: (row) => `${row.nombre}${row.marca ? ` — ${row.marca}` : ''}` },
+      { key: 'medida', label: TXT.columns.medida, render: (row) => row.medida || COMMON.notAvailable },
+      { key: 'estado_conservacion', label: TXT.columns.conservacion },
+      {
+        key: 'estado_disponibilidad',
+        label: TXT.columns.disponibilidad,
+        type: 'badge',
+        badgeType: badgeTypeDisponibilidad,
+        filter: {
+          options: [{ value: '', label: COMMON.all }, ...TXT.estadosDisponibilidad],
+          value: filtroDisponibilidad,
+          onChange: setFiltroDisponibilidad,
+        },
+      },
+      {
+        key: 'actions',
+        label: COMMON.actions,
+        type: 'actions',
+        actions: [
+          { label: COMMON.edit, icon: Pencil, onClick: abrirEditar },
+          { label: COMMON.delete, icon: Trash2, onClick: setAEliminar },
+        ],
+      },
+    ],
+    [filtroDisponibilidad],
+  );
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 3 } }}>
-      {/* Cabecera Mejorada */}
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
-          justifyContent: 'space-between', 
-          alignItems: { xs: 'flex-start', sm: 'center' }, 
-          gap: 2, 
-          mb: 4 
-        }}
-      >
-        <Typography variant="h4">Inventario de Instrumentos</Typography>
-        <Button
-          variant="contained"
-          startIcon={<Plus size={20} />}
-          onClick={handleOpenCreate}
-          sx={{
-            px: 3,
-            py: 1,
-            whiteSpace: 'nowrap' // Evita que el texto del botón se rompa en dos líneas
-          }}
-        >
-          Nuevo Instrumento
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
+          <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
+        </div>
+        <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
+          {TXT.newButton}
         </Button>
-      </Box>
+      </div>
 
-      {/* Filtros */}
-      <InstrumentoFilters
-        search={search}
-        setSearch={setSearch}
-        filterDisponibilidad={filterDisponibilidad}
-        setFilterDisponibilidad={setFilterDisponibilidad}
+      <TableB
+        columns={columns}
+        data={dataFiltrada}
+        rowKey="id"
+        loading={loading}
+        error={error}
+        onRetry={cargar}
+        emptyMessage={TXT.emptyMessage}
+        {...tableColors}
       />
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Tabla de Resultados */}
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Box sx={{ width: '100%' }}>
-          <InstrumentoTable
-            instrumentos={filteredInstrumentos}
-            onEdit={handleOpenEdit}
-            onDelete={handleDeleteClick}
-          />
-        </Box>
-      )}
-
-      {/* Dialog Formularios */}
-      <InstrumentoDialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        editingInstrumento={editingInstrumento}
+      <DrawPanel
+        isOpen={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        title={editando ? TXT.editTitle : TXT.newTitle}
+        showActions
+        formId="form-instrumento"
+        confirmText={editando ? COMMON.save : COMMON.register}
+        loading={saving}
+        progressMode="form"
         formData={formData}
-        onChangeForm={handleChangeForm}
-        onSubmit={handleSubmit}
-        formError={formError}
-      />
-
-      {/* Diálogo de Confirmación para Eliminar */}
-      <ConfirmDialog
-        open={confirmDialog.open}
-        onClose={() => setConfirmDialog({ open: false, id: null })}
-        onConfirm={handleConfirmDelete}
-        title="Eliminar Instrumento"
-        message="¿Estás seguro de que deseas eliminar este instrumento del inventario? Esta acción es irreversible."
-      />
-
-      {/* Alertas */}
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={4000}
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        requiredFields={['codigo_inventario', 'nombre']}
       >
-        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
-          {notification.message}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
-};
+        <form
+          id="form-instrumento"
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
+          {formError && <Barnner type="danger">{formError}</Barnner>}
 
-export default Instrumentos;
+          <TextField label={TXT.fields.codigoInventario} name="codigo_inventario" value={formData.codigo_inventario} onChange={handleChange} required />
+          <TextField label={TXT.fields.nombre} name="nombre" value={formData.nombre} onChange={handleChange} required />
+          <TextField label={TXT.fields.marca} name="marca" value={formData.marca} onChange={handleChange} />
+          <TextField label={TXT.fields.modelo} name="modelo" value={formData.modelo} onChange={handleChange} />
+          <TextField label={TXT.fields.numeroSerie} name="numero_serie" value={formData.numero_serie} onChange={handleChange} />
+          <TextField label={TXT.fields.medida} name="medida" value={formData.medida} onChange={handleChange} placeholder={TXT.fields.medidaPlaceholder} />
+          <TextField label={TXT.fields.color} name="color" value={formData.color} onChange={handleChange} />
+          <TextField label={TXT.fields.accesorios} name="accesorios" value={formData.accesorios} onChange={handleChange} placeholder={TXT.fields.accesoriosPlaceholder} />
+          <Selector
+            label={TXT.fields.estadoConservacion}
+            options={TXT.estadosConservacion}
+            value={formData.estado_conservacion}
+            onChange={(e) => handleChange({ target: { name: 'estado_conservacion', value: e.target.value } })}
+          />
+          <Selector
+            label={TXT.fields.disponibilidad}
+            options={TXT.estadosDisponibilidad}
+            value={formData.estado_disponibilidad}
+            onChange={(e) => handleChange({ target: { name: 'estado_disponibilidad', value: e.target.value } })}
+          />
+        </form>
+      </DrawPanel>
+
+      <AlertModal
+        open={Boolean(aEliminar)}
+        title={TXT.deleteTitle}
+        message={deleteError || (aEliminar && TXT.deleteConfirm(aEliminar.nombre))}
+        confirmText={COMMON.delete}
+        cancelText={COMMON.cancel}
+        onClose={() => {
+          setAEliminar(null);
+          setDeleteError('');
+        }}
+        onConfirm={confirmarEliminar}
+      />
+    </div>
+  );
+}

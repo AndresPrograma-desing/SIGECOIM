@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { Usuario } from '../models/index.js';
+import { createContextHubUser, editContextHubUser, listContextHubUsers } from '../services/contextHubService.js';
 
 // Obtener todos los usuarios (excluyendo la contraseña)
 export const getUsuarios = async (req, res) => {
@@ -34,7 +35,7 @@ export const createUsuario = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Crear el usuario en la BD
+    // Crear el usuario en la BD de SIGECOIM
     const nuevoUsuario = await Usuario.create({
       nombre,
       email,
@@ -42,6 +43,13 @@ export const createUsuario = async (req, res) => {
       rol: rol || 'COORDINADOR',
       estado: true,
     });
+
+    // Sincronizar creación de usuario en ContextHub
+    try {
+      await createContextHubUser(email, password);
+    } catch (chErr) {
+      console.warn('Advertencia al sincronizar nuevo usuario con ContextHub:', chErr.message);
+    }
 
     res.status(201).json({
       message: 'Usuario registrado con éxito.',

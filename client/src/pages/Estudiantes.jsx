@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Alert, CircularProgress, Snackbar, Button, TextField, InputAdornment } from '@mui/material';
-import { Plus, Search } from 'lucide-react';
-import api from '../services/api';
-import EstudianteForm from '../components/EstudianteForm';
-import EstudianteTable from '../components/EstudianteTable';
-import DrawPanel from '../components/DrawPanel';
-import ConfirmDialog from '../components/ConfirmDialog';
+import { useEffect, useMemo, useState } from 'react';
+import { TableB, DrawPanel, AlertModal, Button, TextField, CalendarPicker, Barnner } from 'anteriority-ui';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { getEstudiantes, createEstudiante, updateEstudiante, deleteEstudiante } from '../services/estudiantes';
+import { calcularEdad, esMenorDeEdad } from '../utils/edad';
+import { tableColors } from '../theme/tokens';
+import { COMMON, ESTUDIANTES as TXT } from '../constants/text';
 
-const initialFormData = {
+const FORM_INICIAL = {
   cedula: '',
   nombre: '',
   apellido: '',
@@ -22,258 +21,210 @@ const initialFormData = {
   rep_direccion: '',
 };
 
-const Estudiantes = () => {
+export default function Estudiantes() {
   const [estudiantes, setEstudiantes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
+  const [error, setError] = useState(null);
 
-  // Panel lateral registro/edición
-  const [isDrawOpen, setIsDrawOpen] = useState(false);
-  const [editingEstudiante, setEditingEstudiante] = useState(null);
-  const [formData, setFormData] = useState(initialFormData);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [formData, setFormData] = useState(FORM_INICIAL);
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  // Confirmación eliminación
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [deletingEstudiante, setDeletingEstudiante] = useState(null);
+  const [aEliminar, setAEliminar] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
-  // Notificaciones
-  const [notification, setNotification] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
-
-  const fetchEstudiantes = async () => {
+  const cargar = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const res = await api.get('/estudiantes');
-      setEstudiantes(res.data);
-      setError('');
+      setEstudiantes(await getEstudiantes());
     } catch (err) {
-      console.error(err);
-      setError('No se pudo cargar la información de los estudiantes.');
+      setError(err.message || TXT.loadError);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchEstudiantes();
+    cargar();
   }, []);
 
-  const handleOpenCreate = () => {
-    setEditingEstudiante(null);
-    setFormData(initialFormData);
+  const esMenor = esMenorDeEdad(formData.fecha_nacimiento);
+
+  const abrirNuevo = () => {
+    setEditando(null);
+    setFormData(FORM_INICIAL);
     setFormError('');
-    setIsDrawOpen(true);
+    setPanelOpen(true);
   };
 
-  const handleOpenEdit = (est) => {
-    setEditingEstudiante(est);
+  const abrirEditar = (estudiante) => {
+    setEditando(estudiante);
     setFormData({
-      cedula: est.cedula || '',
-      nombre: est.nombre || '',
-      apellido: est.apellido || '',
-      fecha_nacimiento: est.fecha_nacimiento || '',
-      telefono: est.telefono || '',
-      direccion: est.direccion || '',
-      rep_cedula: est.representante?.cedula || '',
-      rep_nombre: est.representante?.nombre || '',
-      rep_apellido: est.representante?.apellido || '',
-      rep_telefono: est.representante?.telefono || '',
-      rep_email: est.representante?.email || '',
-      rep_direccion: est.representante?.direccion || '',
+      cedula: estudiante.cedula || '',
+      nombre: estudiante.nombre || '',
+      apellido: estudiante.apellido || '',
+      fecha_nacimiento: estudiante.fecha_nacimiento || '',
+      telefono: estudiante.telefono || '',
+      direccion: estudiante.direccion || '',
+      rep_cedula: estudiante.representante?.cedula || '',
+      rep_nombre: estudiante.representante?.nombre || '',
+      rep_apellido: estudiante.representante?.apellido || '',
+      rep_telefono: estudiante.representante?.telefono || '',
+      rep_email: estudiante.representante?.email || '',
+      rep_direccion: estudiante.representante?.direccion || '',
     });
     setFormError('');
-    setIsDrawOpen(true);
+    setPanelOpen(true);
   };
 
-  const handleDeleteClick = (est) => {
-    setDeletingEstudiante(est);
-    setIsConfirmOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    try {
-      await api.delete(`/estudiantes/${deletingEstudiante.id}`);
-      setNotification({
-        open: true,
-        message: 'Estudiante eliminado con éxito.',
-        severity: 'success',
-      });
-      fetchEstudiantes();
-    } catch (err) {
-      console.error(err);
-      setNotification({
-        open: true,
-        message: err.response?.data?.error || 'No se pudo eliminar al estudiante.',
-        severity: 'error',
-      });
-    } finally {
-      setIsConfirmOpen(false);
-      setDeletingEstudiante(null);
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { cedula, nombre, apellido, fecha_nacimiento } = formData;
-
-    if (!cedula.trim() || !nombre.trim() || !apellido.trim() || !fecha_nacimiento) {
-      setFormError('Cédula, Nombre, Apellido y Fecha de Nacimiento son requeridos.');
-      return;
-    }
-
-    // Validar representante si es menor de edad
-    const birthDate = new Date(fecha_nacimiento);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-
-    if (age < 18) {
-      const { rep_cedula, rep_nombre, rep_apellido, rep_telefono, rep_direccion } = formData;
-      if (!rep_cedula.trim() || !rep_nombre.trim() || !rep_apellido.trim() || !rep_telefono.trim() || !rep_direccion.trim()) {
-        setFormError('Todos los datos del Representante Legal son obligatorios para estudiantes menores de edad.');
-        return;
-      }
-    }
-
+    setFormError('');
+    setSaving(true);
     try {
-      if (editingEstudiante) {
-        await api.put(`/estudiantes/${editingEstudiante.id}`, formData);
-        setNotification({
-          open: true,
-          message: 'Estudiante actualizado con éxito.',
-          severity: 'success',
-        });
+      if (editando) {
+        await updateEstudiante(editando.id, formData);
       } else {
-        await api.post('/estudiantes', formData);
-        setNotification({
-          open: true,
-          message: 'Estudiante registrado con éxito.',
-          severity: 'success',
-        });
+        await createEstudiante(formData);
       }
-      setIsDrawOpen(false);
-      fetchEstudiantes();
+      setPanelOpen(false);
+      await cargar();
     } catch (err) {
-      console.error(err);
-      setFormError(err.response?.data?.error || 'Ocurrió un error al guardar el estudiante.');
+      setFormError(err.message || TXT.saveError);
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Filtrado de estudiantes en la barra de búsqueda
-  const filteredEstudiantes = estudiantes.filter((est) => {
-    const fullName = `${est.nombre} ${est.apellido}`.toLowerCase();
-    const searchLower = search.toLowerCase();
-    return (
-      fullName.includes(searchLower) ||
-      (est.cedula && est.cedula.toLowerCase().includes(searchLower)) ||
-      (est.representante && `${est.representante.nombre} ${est.representante.apellido}`.toLowerCase().includes(searchLower))
-    );
-  });
+  const confirmarEliminar = async () => {
+    setDeleteError('');
+    try {
+      await deleteEstudiante(aEliminar.id);
+      setAEliminar(null);
+      await cargar();
+    } catch (err) {
+      setDeleteError(err.message || TXT.deleteError);
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      { key: 'nombre', label: TXT.columns.nombre, render: (row) => `${row.nombre} ${row.apellido}` },
+      { key: 'cedula', label: TXT.columns.cedula, render: (row) => row.cedula || COMMON.notAvailable },
+      { key: 'edad', label: TXT.columns.edad, render: (row) => calcularEdad(row.fecha_nacimiento) ?? COMMON.notAvailable },
+      {
+        key: 'representante',
+        label: TXT.columns.representante,
+        render: (row) =>
+          row.representante ? `${row.representante.nombre} ${row.representante.apellido}` : TXT.columns.mayorDeEdad,
+      },
+      {
+        key: 'actions',
+        label: COMMON.actions,
+        type: 'actions',
+        actions: [
+          { label: COMMON.edit, icon: Pencil, onClick: abrirEditar },
+          { label: COMMON.delete, icon: Trash2, onClick: setAEliminar },
+        ],
+      },
+    ],
+    [],
+  );
+
+  const requiredFields = esMenor
+    ? ['nombre', 'apellido', 'fecha_nacimiento', 'rep_cedula', 'rep_nombre', 'rep_apellido', 'rep_telefono', 'rep_direccion']
+    : ['nombre', 'apellido', 'fecha_nacimiento'];
 
   return (
-    <Box sx={{ width: '100%' }}>
-      {/* Cabecera y acciones */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant="h4" fontWeight="bold">
-          Estudiantes Registrados
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Plus size={20} />}
-          onClick={handleOpenCreate}
-          sx={{ py: 1.2, px: 3, fontWeight: 'bold' }}
-        >
-          Nuevo Estudiante
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
+          <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
+        </div>
+        <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
+          {TXT.newButton}
         </Button>
-      </Box>
+      </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Barra de Búsqueda */}
-      <Box sx={{ mb: 3, maxWidth: 500 }}>
-        <TextField
-          placeholder="Buscar estudiante por nombre, cédula o representante..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          fullWidth
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search size={18} color="rgba(0,0,0,0.4)" />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Box>
-
-      {/* Tabla de Resultados */}
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Box sx={{ width: '100%' }}>
-          <EstudianteTable
-            estudiantes={filteredEstudiantes}
-            onEdit={handleOpenEdit}
-            onDelete={handleDeleteClick}
-          />
-        </Box>
-      )}
-
-      {/* Drawer flotante para Registrar/Editar Estudiante */}
-      <DrawPanel
-        width={550}
-        open={isDrawOpen}
-        onClose={() => setIsDrawOpen(false)}
-        title={editingEstudiante ? 'Editar Estudiante' : 'Registrar Estudiante'}
-        onSubmit={handleSubmit}
-      >
-        <EstudianteForm
-          formData={formData}
-          setFormData={setFormData}
-          formError={formError}
-        />
-      </DrawPanel>
-
-      {/* Diálogo de Confirmación para Eliminar */}
-      <ConfirmDialog
-        open={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        onConfirm={handleDeleteConfirm}
-        title="Eliminar Estudiante"
-        message="¿Estás seguro de que deseas eliminar este estudiante? Esta acción es irreversible y podría fallar si el estudiante tiene contratos de comodato asociados."
+      <TableB
+        columns={columns}
+        data={estudiantes}
+        rowKey="id"
+        loading={loading}
+        error={error}
+        onRetry={cargar}
+        emptyMessage={TXT.emptyMessage}
+        {...tableColors}
       />
 
-      {/* Notificaciones flotantes */}
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={4000}
-        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+      <DrawPanel
+        isOpen={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        title={editando ? TXT.editTitle : TXT.newTitle}
+        description={esMenor ? TXT.minorDescription : undefined}
+        showActions
+        formId="form-estudiante"
+        confirmText={editando ? COMMON.save : COMMON.register}
+        loading={saving}
+        progressMode="form"
+        formData={formData}
+        requiredFields={requiredFields}
       >
-        <Alert
-          onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
-          severity={notification.severity}
-          sx={{ width: '100%' }}
+        <form
+          id="form-estudiante"
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
         >
-          {notification.message}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
-};
+          {formError && <Barnner type="danger">{formError}</Barnner>}
 
-export default Estudiantes;
+          <TextField label={TXT.fields.cedula} name="cedula" value={formData.cedula} onChange={handleChange} />
+          <TextField label={TXT.fields.nombre} name="nombre" value={formData.nombre} onChange={handleChange} required />
+          <TextField label={TXT.fields.apellido} name="apellido" value={formData.apellido} onChange={handleChange} required />
+          <CalendarPicker
+            label={TXT.fields.fechaNacimiento}
+            name="fecha_nacimiento"
+            value={formData.fecha_nacimiento}
+            onChange={handleChange}
+            required
+          />
+          <TextField label={TXT.fields.telefono} name="telefono" value={formData.telefono} onChange={handleChange} />
+          <TextField label={TXT.fields.direccion} name="direccion" value={formData.direccion} onChange={handleChange} />
+
+          {esMenor && (
+            <>
+              <Barnner type="warning">{TXT.minorWarning}</Barnner>
+              <TextField label={TXT.fields.repCedula} name="rep_cedula" value={formData.rep_cedula} onChange={handleChange} required />
+              <TextField label={TXT.fields.repNombre} name="rep_nombre" value={formData.rep_nombre} onChange={handleChange} required />
+              <TextField label={TXT.fields.repApellido} name="rep_apellido" value={formData.rep_apellido} onChange={handleChange} required />
+              <TextField label={TXT.fields.repTelefono} name="rep_telefono" value={formData.rep_telefono} onChange={handleChange} required />
+              <TextField label={TXT.fields.repEmail} name="rep_email" value={formData.rep_email} onChange={handleChange} />
+              <TextField label={TXT.fields.repDireccion} name="rep_direccion" value={formData.rep_direccion} onChange={handleChange} required />
+            </>
+          )}
+        </form>
+      </DrawPanel>
+
+      <AlertModal
+        open={Boolean(aEliminar)}
+        title={TXT.deleteTitle}
+        message={deleteError || (aEliminar && TXT.deleteConfirm(aEliminar.nombre, aEliminar.apellido))}
+        confirmText={COMMON.delete}
+        cancelText={COMMON.cancel}
+        onClose={() => {
+          setAEliminar(null);
+          setDeleteError('');
+        }}
+        onConfirm={confirmarEliminar}
+      />
+    </div>
+  );
+}

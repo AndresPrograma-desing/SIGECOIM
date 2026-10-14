@@ -1,226 +1,211 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Alert, CircularProgress, Snackbar, Button } from '@mui/material';
-import { UserPlus } from 'lucide-react';
-import api from '../services/api';
-import UsuarioTable from '../components/UsuarioTable';
-import UsuarioForm from '../components/UsuarioForm';
-import DrawPanel from '../components/DrawPanel';
-import ConfirmDialog from '../components/ConfirmDialog';
+import { useEffect, useMemo, useState } from 'react';
+import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, Swich, Barnner } from 'anteriority-ui';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { getUsuarios, createUsuario, updateUsuario, toggleEstadoUsuario, deleteUsuario } from '../services/usuarios';
+import { tableColors } from '../theme/tokens';
+import { COMMON, USUARIOS as TXT } from '../constants/text';
 
-const Usuarios = () => {
+const ADMIN_EMAIL = 'admin@sigecoim.com';
+
+const FORM_INICIAL = {
+  nombre: '',
+  email: '',
+  password: '',
+  rol: 'COORDINADOR',
+};
+
+export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
-  // Estado del DrawPanel
-  const [isDrawOpen, setIsDrawOpen] = useState(false);
-
-  // Formulario
-  const [formData, setFormData] = useState({
-    nombre: '',
-    email: '',
-    password: '',
-    rol: 'COORDINADOR',
-  });
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [formData, setFormData] = useState(FORM_INICIAL);
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  // Notificaciones
-  const [notification, setNotification] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [aEliminar, setAEliminar] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
-  const fetchUsuarios = async () => {
+  const cargar = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const res = await api.get('/usuarios');
-      setUsuarios(res.data);
-      setError('');
+      setUsuarios(await getUsuarios());
     } catch (err) {
-      console.error(err);
-      setError('No se pudo obtener la lista de usuarios.');
+      setError(err.message || TXT.loadError);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsuarios();
+    cargar();
   }, []);
 
-  const handleChangeForm = (e) => {
+  const abrirNuevo = () => {
+    setEditando(null);
+    setFormData(FORM_INICIAL);
+    setFormError('');
+    setPanelOpen(true);
+  };
+
+  const abrirEditar = (usuario) => {
+    setEditando(usuario);
+    setFormData({ nombre: usuario.nombre || '', email: usuario.email || '', password: '', rol: usuario.rol || 'COORDINADOR' });
+    setFormError('');
+    setPanelOpen(true);
+  };
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const [editingUsuario, setEditingUsuario] = useState(null);
-
-  const handleOpenEdit = (usr) => {
-    setEditingUsuario(usr);
-    setFormData({
-      nombre: usr.nombre,
-      email: usr.email,
-      password: '',
-      rol: usr.rol,
-    });
-    setFormError('');
-    setIsDrawOpen(true);
-  };
-
-  const handleOpenCreate = () => {
-    setEditingUsuario(null);
-    setFormData({ nombre: '', email: '', password: '', rol: 'COORDINADOR' });
-    setFormError('');
-    setIsDrawOpen(true);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { nombre, email, password, rol } = formData;
-
-    if (!nombre.trim() || !email.trim() || (!editingUsuario && !password)) {
-      setFormError('Nombre, email y contraseña son obligatorios.');
-      return;
-    }
-
+    setFormError('');
+    setSaving(true);
     try {
-      if (editingUsuario) {
-        await api.put(`/usuarios/${editingUsuario.id}`, { nombre, email, password, rol });
-        showNotification('Usuario actualizado exitosamente.', 'success');
+      if (editando) {
+        const payload = { ...formData };
+        if (!payload.password) delete payload.password;
+        await updateUsuario(editando.id, payload);
       } else {
-        await api.post('/usuarios', { nombre, email, password, rol });
-        showNotification('Usuario creado exitosamente.', 'success');
+        await createUsuario(formData);
       }
-      setIsDrawOpen(false);
-      fetchUsuarios();
+      setPanelOpen(false);
+      await cargar();
     } catch (err) {
-      console.error(err);
-      setFormError(err.response?.data?.error || 'Ocurrió un error al guardar el usuario.');
-    }
-  };
-
-  const handleToggleState = async (id) => {
-    try {
-      const res = await api.put(`/usuarios/${id}/toggle`);
-      showNotification(res.data.message, 'success');
-      fetchUsuarios();
-    } catch (err) {
-      console.error(err);
-      showNotification('No se pudo cambiar el estado del usuario.', 'error');
-    }
-  };
-
-  const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null });
-
-  const handleDeleteClick = (id) => {
-    setConfirmDialog({ open: true, id });
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!confirmDialog.id) return;
-    try {
-      const res = await api.delete(`/usuarios/${confirmDialog.id}`);
-      showNotification(res.data.message, 'success');
-      fetchUsuarios();
-    } catch (err) {
-      console.error(err);
-      showNotification(err.response?.data?.error || 'No se pudo eliminar el usuario.', 'error');
+      setFormError(err.message || TXT.saveError);
     } finally {
-      setConfirmDialog({ open: false, id: null });
+      setSaving(false);
     }
   };
 
-  const showNotification = (message, severity = 'success') => {
-    setNotification({ open: true, message, severity });
+  const handleToggle = async (usuario) => {
+    try {
+      await toggleEstadoUsuario(usuario.id);
+      await cargar();
+    } catch (err) {
+      setError(err.message || TXT.toggleError);
+    }
   };
 
-  const handleCloseNotification = () => {
-    setNotification((prev) => ({ ...prev, open: false }));
+  const confirmarEliminar = async () => {
+    setDeleteError('');
+    try {
+      await deleteUsuario(aEliminar.id);
+      setAEliminar(null);
+      await cargar();
+    } catch (err) {
+      setDeleteError(err.message || TXT.deleteError);
+    }
   };
+
+  const columns = useMemo(
+    () => [
+      { key: 'nombre', label: TXT.columns.nombre },
+      { key: 'email', label: TXT.columns.email },
+      {
+        key: 'rol',
+        label: TXT.columns.rol,
+        render: (row) => TXT.roles.find((r) => r.value === row.rol)?.label ?? row.rol,
+      },
+      {
+        key: 'estado',
+        label: TXT.columns.estado,
+        render: (row) => <Swich value={row.estado} onChange={() => handleToggle(row)} />,
+      },
+      {
+        key: 'actions',
+        label: COMMON.actions,
+        type: 'actions',
+        actions: [
+          { label: COMMON.edit, icon: Pencil, onClick: abrirEditar },
+          { label: COMMON.delete, icon: Trash2, onClick: setAEliminar, disabled: (row) => row.email === ADMIN_EMAIL },
+        ],
+      },
+    ],
+    [],
+  );
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 3 } }}>
-      {/* Cabecera */}
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justify: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: 2,
-          mb: 4,
-        }}
-      >
-        <Typography variant="h4">Gestión de Usuarios del Sistema</Typography>
-        <Button
-          variant="contained"
-          startIcon={<UserPlus size={20} />}
-          onClick={handleOpenCreate}
-          sx={{
-            px: 3,
-            py: 1,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Nuevo Usuario
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
+          <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
+        </div>
+        <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
+          {TXT.newButton}
         </Button>
-      </Box>
+      </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Box sx={{ width: '100%' }}>
-          <UsuarioTable usuarios={usuarios} onToggleState={handleToggleState} onEdit={handleOpenEdit} onDelete={handleDeleteClick} />
-        </Box>
-      )}
-
-      {/* Drawer flotante para Registrar/Editar Usuario */}
-      <DrawPanel
-        width={500}
-        open={isDrawOpen}
-        onClose={() => setIsDrawOpen(false)}
-        title={editingUsuario ? "Editar Usuario" : "Registrar Nuevo Usuario"}
-        onSubmit={handleSubmit}
-      >
-        <UsuarioForm
-          formData={formData}
-          onChangeForm={handleChangeForm}
-          formError={formError}
-          isEdit={!!editingUsuario}
-        />
-      </DrawPanel>
-
-      {/* Diálogo de Confirmación */}
-      <ConfirmDialog
-        open={confirmDialog.open}
-        onClose={() => setConfirmDialog({ open: false, id: null })}
-        onConfirm={handleConfirmDelete}
-        title="Eliminar Usuario"
-        message="¿Estás seguro de que deseas eliminar permanentemente este usuario? Esta acción no se puede deshacer."
+      <TableB
+        columns={columns}
+        data={usuarios}
+        rowKey="id"
+        loading={loading}
+        error={error}
+        onRetry={cargar}
+        emptyMessage={TXT.emptyMessage}
+        {...tableColors}
       />
 
-      {/* Alertas */}
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={4000}
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      <DrawPanel
+        isOpen={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        title={editando ? TXT.editTitle : TXT.newTitle}
+        showActions
+        formId="form-usuario"
+        confirmText={editando ? COMMON.save : COMMON.register}
+        loading={saving}
+        progressMode="form"
+        formData={formData}
+        requiredFields={editando ? ['nombre', 'email'] : ['nombre', 'email', 'password']}
       >
-        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
-          {notification.message}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
-};
+        <form
+          id="form-usuario"
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
+          {formError && <Barnner type="danger">{formError}</Barnner>}
 
-export default Usuarios;
+          <TextField label={TXT.fields.nombre} name="nombre" value={formData.nombre} onChange={handleChange} required />
+          <TextField label={TXT.fields.email} name="email" type="email" value={formData.email} onChange={handleChange} required />
+          <TextField
+            label={TXT.fields.password}
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            required={!editando}
+            helperText={editando ? TXT.fields.passwordEditHint : undefined}
+          />
+          <Selector
+            label={TXT.fields.rol}
+            options={TXT.roles}
+            value={formData.rol}
+            onChange={(e) => handleChange({ target: { name: 'rol', value: e.target.value } })}
+            required
+          />
+        </form>
+      </DrawPanel>
+
+      <AlertModal
+        open={Boolean(aEliminar)}
+        title={TXT.deleteTitle}
+        message={deleteError || (aEliminar && TXT.deleteConfirm(aEliminar.nombre))}
+        confirmText={COMMON.delete}
+        cancelText={COMMON.cancel}
+        onClose={() => {
+          setAEliminar(null);
+          setDeleteError('');
+        }}
+        onConfirm={confirmarEliminar}
+      />
+    </div>
+  );
+}
