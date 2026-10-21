@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, Barnner } from 'anteriority-ui';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { getInstrumentos, createInstrumento, updateInstrumento, deleteInstrumento } from '../services/instrumentos';
-import { tableColors } from '../theme/tokens';
-import { COMMON, INSTRUMENTOS as TXT } from '../constants/text';
+import { useOutletContext } from 'react-router-dom';
+import { TableB, DrawPanel, AlertModal, Button, TextField, Selector } from 'anteriority-ui';
+import FormMessage from '../../../components/FormMessage';
+import { Plus } from 'lucide-react';
+import { getInstrumentos, createInstrumento, updateInstrumento, deleteInstrumento } from '../../../services/instrumentos';
+import { tableColors } from '../../../theme/tokens';
+import { COMMON, INSTRUMENTOS as TXT } from '../../../constants/text';
 
 const FORM_INICIAL = {
   codigo_inventario: '',
@@ -18,6 +20,10 @@ const FORM_INICIAL = {
   estado_disponibilidad: 'DISPONIBLE',
 };
 
+// Familia y subfamilia son solo guías de captura (no se envían al backend):
+// ayudan a elegir el nombre del instrumento desde la lista típica de su subfamilia.
+const SELECTOR_INICIAL = { familia: '', subfamilia: '' };
+
 function badgeTypeDisponibilidad(row) {
   if (row.estado_disponibilidad === 'DISPONIBLE') return 'success';
   if (row.estado_disponibilidad === 'MANTENIMIENTO') return 'warning';
@@ -25,6 +31,7 @@ function badgeTypeDisponibilidad(row) {
 }
 
 export default function Instrumentos() {
+  const { search } = useOutletContext() ?? {};
   const [instrumentos, setInstrumentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +40,7 @@ export default function Instrumentos() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const [formData, setFormData] = useState(FORM_INICIAL);
+  const [selectorData, setSelectorData] = useState(SELECTOR_INICIAL);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -58,6 +66,7 @@ export default function Instrumentos() {
   const abrirNuevo = () => {
     setEditando(null);
     setFormData(FORM_INICIAL);
+    setSelectorData(SELECTOR_INICIAL);
     setFormError('');
     setPanelOpen(true);
   };
@@ -76,6 +85,7 @@ export default function Instrumentos() {
       estado_conservacion: instrumento.estado_conservacion || 'BUENO',
       estado_disponibilidad: instrumento.estado_disponibilidad || 'DISPONIBLE',
     });
+    setSelectorData(SELECTOR_INICIAL);
     setFormError('');
     setPanelOpen(true);
   };
@@ -83,6 +93,19 @@ export default function Instrumentos() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFamiliaChange = (e) => {
+    const familia = e.target.value;
+    const familiaData = TXT.familias.find((f) => f.value === familia);
+    // Si la familia tiene una sola subfamilia (ej. Viento-Madera), se autoselecciona
+    // para mostrar de inmediato la lista de instrumentos típicos.
+    const subfamilia = familiaData?.subfamilias.length === 1 ? familiaData.subfamilias[0].value : '';
+    setSelectorData({ familia, subfamilia });
+  };
+
+  const handleSubfamiliaChange = (e) => {
+    setSelectorData((prev) => ({ ...prev, subfamilia: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
@@ -115,9 +138,22 @@ export default function Instrumentos() {
     }
   };
 
-  const dataFiltrada = filtroDisponibilidad
-    ? instrumentos.filter((i) => i.estado_disponibilidad === filtroDisponibilidad)
-    : instrumentos;
+  const dataFiltrada = instrumentos
+    .filter((i) => !filtroDisponibilidad || i.estado_disponibilidad === filtroDisponibilidad)
+    .filter((i) =>
+      !search || `${i.nombre} ${i.marca ?? ''} ${i.codigo_inventario}`.toLowerCase().includes(search.toLowerCase()),
+    );
+
+  const opcionesFamilias = TXT.familias.map(({ value, label }) => ({ value, label }));
+
+  const familiaSeleccionada = TXT.familias.find((f) => f.value === selectorData.familia);
+  const opcionesSubfamilias = (familiaSeleccionada?.subfamilias ?? []).map(({ value, label }) => ({ value, label }));
+
+  const subfamiliaSeleccionada = familiaSeleccionada?.subfamilias.find((s) => s.value === selectorData.subfamilia);
+  const opcionesInstrumentosTipicos = (subfamiliaSeleccionada?.instrumentos ?? []).map((nombre) => ({
+    value: nombre,
+    label: nombre,
+  }));
 
   const columns = useMemo(
     () => [
@@ -141,8 +177,8 @@ export default function Instrumentos() {
         label: COMMON.actions,
         type: 'actions',
         actions: [
-          { label: COMMON.edit, icon: Pencil, onClick: abrirEditar },
-          { label: COMMON.delete, icon: Trash2, onClick: setAEliminar },
+          { label: COMMON.edit, onClick: abrirEditar },
+          { label: COMMON.delete, onClick: setAEliminar },
         ],
       },
     ],
@@ -169,6 +205,7 @@ export default function Instrumentos() {
         error={error}
         onRetry={cargar}
         emptyMessage={TXT.emptyMessage}
+        scrollFooter
         {...tableColors}
       />
 
@@ -189,10 +226,37 @@ export default function Instrumentos() {
           onSubmit={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
         >
-          {formError && <Barnner type="danger">{formError}</Barnner>}
+          {formError && <FormMessage type="danger">{formError}</FormMessage>}
 
           <TextField label={TXT.fields.codigoInventario} name="codigo_inventario" value={formData.codigo_inventario} onChange={handleChange} required />
-          <TextField label={TXT.fields.nombre} name="nombre" value={formData.nombre} onChange={handleChange} required />
+
+          <Selector
+            label={TXT.fields.familia}
+            options={opcionesFamilias}
+            value={selectorData.familia}
+            onChange={handleFamiliaChange}
+          />
+
+          {opcionesSubfamilias.length > 1 && (
+            <Selector
+              label={TXT.fields.subfamilia}
+              options={opcionesSubfamilias}
+              value={selectorData.subfamilia}
+              onChange={handleSubfamiliaChange}
+            />
+          )}
+
+          {opcionesInstrumentosTipicos.length > 0 ? (
+            <Selector
+              label={TXT.fields.nombre}
+              options={opcionesInstrumentosTipicos}
+              value={formData.nombre}
+              onChange={(e) => handleChange({ target: { name: 'nombre', value: e.target.value } })}
+              required
+            />
+          ) : (
+            <TextField label={TXT.fields.nombre} name="nombre" value={formData.nombre} onChange={handleChange} required />
+          )}
           <TextField label={TXT.fields.marca} name="marca" value={formData.marca} onChange={handleChange} />
           <TextField label={TXT.fields.modelo} name="modelo" value={formData.modelo} onChange={handleChange} />
           <TextField label={TXT.fields.numeroSerie} name="numero_serie" value={formData.numero_serie} onChange={handleChange} />

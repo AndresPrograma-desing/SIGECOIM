@@ -33,6 +33,10 @@ const Usuario = sequelize.define('USUARIO', {
     allowNull: false,
     defaultValue: true,
   },
+  contextHubUserId: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+  },
 }, {
   tableName: 'USUARIO',
   timestamps: false,

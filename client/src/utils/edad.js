@@ -16,3 +16,8 @@ export function esMenorDeEdad(fechaNacimiento) {
   const edad = calcularEdad(fechaNacimiento);
   return edad !== null && edad < 18;
 }
+
+export function esFechaFutura(fechaNacimiento) {
+  if (!fechaNacimiento) return false;
+  return new Date(fechaNacimiento) > new Date();
+}

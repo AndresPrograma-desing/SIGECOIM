@@ -41,6 +41,10 @@ export const createEstudiante = async (req, res) => {
       return res.status(400).json({ error: 'Nombre, apellido y fecha de nacimiento son requeridos.' });
     }
 
+    if (new Date(fecha_nacimiento) > new Date()) {
+      return res.status(400).json({ error: 'La fecha de nacimiento no puede ser una fecha futura.' });
+    }
+
     // Validar cédula única del estudiante (si se provee)
     if (cedula) {
       const existeCedula = await Estudiante.findOne({ where: { cedula } });
@@ -133,6 +137,10 @@ export const updateEstudiante = async (req, res) => {
     const estudiante = await Estudiante.findByPk(id);
     if (!estudiante) {
       return res.status(404).json({ error: 'Estudiante no encontrado.' });
+    }
+
+    if (fecha_nacimiento && new Date(fecha_nacimiento) > new Date()) {
+      return res.status(400).json({ error: 'La fecha de nacimiento no puede ser una fecha futura.' });
     }
 
     // Validar cédula única si se cambia

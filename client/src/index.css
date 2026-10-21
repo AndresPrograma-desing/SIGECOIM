@@ -21,10 +21,11 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
   background: #f8f9fb;
   color: #0b3558;
+  overflow-x: hidden;
 }
 
 #root {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ErrorMessage, Loading } from 'anteriority-ui';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 
 const CLIENT_KEY = import.meta.env.VITE_CONTEXTHUB_CLIENT_KEY || '1158a6f7-02be-4001-8a3f-7cd2539ac7fe';
 const CONTEXTHUB_URL = import.meta.env.VITE_CONTEXTHUB_URL || 'http://localhost:3005';
@@ -116,7 +116,7 @@ export default function Login() {
     >
       {error && (
         <div style={{ width: '100%', maxWidth: 420, marginBottom: 16 }}>
-          <ErrorMessage message={error} title="Error de autenticación" variant="danger" />
+          {/* <ErrorMessage message={error} title="Error de autenticación" variant="danger" /> */}
         </div>
       )}
 
