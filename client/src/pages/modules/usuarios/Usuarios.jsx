@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, Swich, Barnner } from 'anteriority-ui';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { getUsuarios, createUsuario, updateUsuario, toggleEstadoUsuario, deleteUsuario } from '../services/usuarios';
-import { tableColors } from '../theme/tokens';
-import { COMMON, USUARIOS as TXT } from '../constants/text';
+import { useOutletContext } from 'react-router-dom';
+import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, Swich } from 'anteriority-ui';
+import FormMessage from '../../../components/FormMessage';
+import { Plus } from 'lucide-react';
+import { getUsuarios, createUsuario, updateUsuario, toggleEstadoUsuario, deleteUsuario } from '../../../services/usuarios';
+import { tableColors } from '../../../theme/tokens';
+import { COMMON, USUARIOS as TXT } from '../../../constants/text';
 
 const ADMIN_EMAIL = 'admin@sigecoim.com';
 
@@ -15,6 +17,7 @@ const FORM_INICIAL = {
 };
 
 export default function Usuarios() {
+  const { search } = useOutletContext() ?? {};
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -104,6 +107,10 @@ export default function Usuarios() {
     }
   };
 
+  const dataFiltrada = search
+    ? usuarios.filter((u) => `${u.nombre} ${u.email}`.toLowerCase().includes(search.toLowerCase()))
+    : usuarios;
+
   const columns = useMemo(
     () => [
       { key: 'nombre', label: TXT.columns.nombre },
@@ -123,8 +130,8 @@ export default function Usuarios() {
         label: COMMON.actions,
         type: 'actions',
         actions: [
-          { label: COMMON.edit, icon: Pencil, onClick: abrirEditar },
-          { label: COMMON.delete, icon: Trash2, onClick: setAEliminar, disabled: (row) => row.email === ADMIN_EMAIL },
+          { label: COMMON.edit, onClick: abrirEditar },
+          { label: COMMON.delete, onClick: setAEliminar, disabled: (row) => row.email === ADMIN_EMAIL },
         ],
       },
     ],
@@ -145,12 +152,13 @@ export default function Usuarios() {
 
       <TableB
         columns={columns}
-        data={usuarios}
+        data={dataFiltrada}
         rowKey="id"
         loading={loading}
         error={error}
         onRetry={cargar}
         emptyMessage={TXT.emptyMessage}
+        scrollFooter
         {...tableColors}
       />
 
@@ -171,7 +179,7 @@ export default function Usuarios() {
           onSubmit={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
         >
-          {formError && <Barnner type="danger">{formError}</Barnner>}
+          {formError && <FormMessage type="danger">{formError}</FormMessage>}
 
           <TextField label={TXT.fields.nombre} name="nombre" value={formData.nombre} onChange={handleChange} required />
           <TextField label={TXT.fields.email} name="email" type="email" value={formData.email} onChange={handleChange} required />

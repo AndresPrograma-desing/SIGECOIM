@@ -27,7 +27,13 @@ export const NAV = {
   instrumentos: 'Instrumentos',
   comodatos: 'Comodatos',
   usuarios: 'Usuarios',
+  configuracion: 'Configuración',
   logout: 'Cerrar sesión',
+  searchPlaceholder: 'Buscar...',
+  notifications: 'Notificaciones',
+  notificationsEmpty: 'No tenés notificaciones nuevas.',
+  commandPaletteCategory: 'Ir a',
+  commandPalettePlaceholder: 'Buscar una página...',
 };
 
 export const ESTUDIANTES = {
@@ -41,6 +47,7 @@ export const ESTUDIANTES = {
   loadError: 'No se pudieron cargar los estudiantes.',
   saveError: 'No se pudo guardar el estudiante.',
   deleteError: 'No se pudo eliminar el estudiante.',
+  futureBirthdateError: 'La fecha de nacimiento no puede ser una fecha futura.',
   emptyMessage: 'No hay estudiantes registrados.',
   deleteTitle: 'Eliminar estudiante',
   deleteConfirm: (nombre, apellido) => `¿Eliminar a ${nombre} ${apellido}? Esta acción no se puede deshacer.`,
@@ -88,6 +95,8 @@ export const INSTRUMENTOS = {
   },
   fields: {
     codigoInventario: 'Código de inventario',
+    familia: 'Familia',
+    subfamilia: 'Subfamilia',
     nombre: 'Nombre del instrumento',
     marca: 'Marca',
     modelo: 'Modelo',
@@ -111,6 +120,63 @@ export const INSTRUMENTOS = {
     { value: 'PRESTADO', label: 'Prestado' },
     { value: 'MANTENIMIENTO', label: 'En mantenimiento' },
   ],
+  // Estructura jerárquica por familias: Familia -> Subfamilia -> Instrumentos típicos.
+  familias: [
+    {
+      value: 'CUERDAS',
+      label: 'Cuerdas',
+      subfamilias: [
+        {
+          value: 'FROTADAS',
+          label: 'Frotadas',
+          instrumentos: ['Violín', 'Viola', 'Violonchelo', 'Contrabajo'],
+        },
+        {
+          value: 'PULSADAS',
+          label: 'Pulsadas',
+          instrumentos: ['Arpa', 'Guitarra'],
+        },
+      ],
+    },
+    {
+      value: 'VIENTO_MADERA',
+      label: 'Viento-Madera',
+      subfamilias: [
+        {
+          value: 'VIENTO_MADERA',
+          label: 'Viento-Madera',
+          instrumentos: ['Flauta traversa', 'Oboe', 'Clarinete', 'Fagot'],
+        },
+      ],
+    },
+    {
+      value: 'VIENTO_METAL',
+      label: 'Viento-Metal',
+      subfamilias: [
+        {
+          value: 'VIENTO_METAL',
+          label: 'Viento-Metal',
+          instrumentos: ['Trompeta', 'Corno francés', 'Trombón', 'Tuba'],
+        },
+      ],
+    },
+    {
+      value: 'PERCUSION',
+      label: 'Percusión',
+      subfamilias: [
+        {
+          value: 'AFINACION_DETERMINADA',
+          label: 'De afinación determinada',
+          instrumentos: ['Timbales', 'Xilófono'],
+        },
+        {
+          value: 'AFINACION_INDETERMINADA',
+          label: 'De afinación indeterminada',
+          instrumentos: ['Redoblante', 'Platillos', 'Triángulo'],
+        },
+      ],
+    },
+  ],
 };
 
 export const COMODATOS = {
@@ -127,7 +193,7 @@ export const COMODATOS = {
   deleteTitle: 'Eliminar comodato',
   deleteConfirm: (folio, esActivo) =>
     `¿Eliminar el comodato "${folio}"? ${esActivo ? 'El instrumento asociado volverá a estar disponible.' : ''}`,
-  registrarDevolucion: 'Registrar devolución',
+  registrarDevolucion: 'Devolución',
   devolucionTitle: 'Registrar devolución',
   devolucionDescription: (folio, instrumento) => `Comodato ${folio} — ${instrumento ?? ''}`,
   devolucionConfirm: 'Confirmar devolución',
@@ -193,4 +259,45 @@ export const USUARIOS = {
     { value: 'ANALISTA_BIENES', label: 'Analista de Bienes' },
     { value: 'COORDINADOR', label: 'Coordinador' },
   ],
+};
+
+export const CONFIGURACION = {
+  pageTitle: 'Configuración',
+  pageSubtitle: 'Ajustes generales e integraciones del sistema.',
+  contextHubTitle: 'ContextHub',
+  contextHubLinkLabel: 'Abrir ContextHub',
+  contextHubLinkUrl: 'https://context-hub-memory.vercel.app/',
+  contextHubMarkdown: `### ¿Qué es ContextHub?
+
+ContextHub es el proveedor de autenticación externo que SIGECOIM usa para el inicio de sesión. En vez de validar las credenciales únicamente contra esta base de datos local, el login de SIGECOIM se integra mediante el SDK de ContextHub, que mantiene su propio registro de usuarios y contraseñas.
+
+### ¿Para qué sirve en este sistema?
+
+Cada usuario de SIGECOIM (email y contraseña) tiene una cuenta espejo en ContextHub. Cuando creás un usuario nuevo desde "Usuarios", SIGECOIM lo registra automáticamente también en ContextHub. El riesgo aparece al editar: si cambiás el correo o la contraseña de un usuario desde SIGECOIM, ese cambio puede no reflejarse en ContextHub si la cuenta no quedó vinculada correctamente, dejando al usuario con credenciales distintas en cada lado.
+
+### ¿Por qué usar ContextHub como proveedor de login?
+
+En vez de que SIGECOIM valide usuario y contraseña directamente contra su propia base de datos, delega esa validación en ContextHub a través de su SDK de login embebido. Esto trae ventajas de seguridad y mantenimiento que sería costoso reimplementar en este proyecto:
+
+- **El navegador nunca recibe un token de sesión real** — Al iniciar sesión, ContextHub entrega un ticket de un solo uso válido por 2 minutos. Ese ticket solo sirve si el backend de SIGECOIM lo canjea con su client secret, que nunca se expone al navegador.
+- **Protección contra ataques de fuerza bruta incluida** — El login y la recuperación de contraseña están limitados por integración (rate limiting), y un intento fallido no revela si fue el correo o la contraseña lo que falló, evitando enumerar usuarios.
+- **Recuperación de contraseña lista para usar** — El flujo de "olvidé mi contraseña" (código de verificación por correo) ya viene resuelto por ContextHub, sin que SIGECOIM tenga que operar su propio sistema de envío de correos ni de códigos temporales.
+- **Pool de usuarios cerrado por integración** — Una cuenta de ContextHub solo puede iniciar sesión en SIGECOIM si fue vinculada explícitamente a esta integración.
+
+### Sincronización manual
+
+Usá el botón de abajo para emparejar por correo electrónico los usuarios locales con sus cuentas en ContextHub. Es útil si editaste el correo o la contraseña de un usuario y la integración quedó desactualizada, o si un usuario no puede iniciar sesión pese a tener credenciales válidas en SIGECOIM.`,
+  syncButton: 'Sincronizar con ContextHub',
+  syncing: 'Sincronizando...',
+  syncError: 'No se pudo sincronizar con ContextHub.',
+  syncSuccess: (actualizados) =>
+    actualizados === 0
+      ? 'Sincronización completa. No había usuarios por actualizar.'
+      : `Sincronización completa. ${actualizados} usuario(s) actualizado(s).`,
+  syncSummary: {
+    totalContextHub: 'Usuarios en ContextHub',
+    totalLocal: 'Usuarios locales',
+    actualizados: 'Vinculados en esta sincronización',
+    sinCoincidencia: 'Sin cuenta en ContextHub',
+  },
 };

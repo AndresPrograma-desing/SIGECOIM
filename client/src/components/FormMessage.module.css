@@ -1,0 +1,14 @@
+.wrapper {
+  display: block;
+  width: 100%;
+}
+
+.wrapper :global(.form-message-barnner) {
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  text-align: left;
+  text-transform: none;
+  box-sizing: border-box;
+}

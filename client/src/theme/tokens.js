@@ -1,3 +1,8 @@
+// Fuente única de verdad del theming visual de SIGECOIM. anteriority-ui no trae un
+// ThemeProvider global para estos componentes, así que cada uno recibe su skin vía props
+// de color individuales — este archivo centraliza esas props para no repetir valores hex
+// sueltos por las páginas y para que un cambio de paleta se haga en un solo lugar.
+//
 // Paleta "Calendly" (tinta navy sobre mármol frío) usada como skin sobre anteriority-ui.
 export const colors = {
   inkNavy: '#0b3558',
@@ -5,7 +10,7 @@ export const colors = {
   slateGray: '#476788',
   mistGray: '#a6bbd1',
   cloud: '#f8f9fb',
-  paper: '#ffffff',
+  paper: '#f6fafdff',
   pebble: '#f0f3f8',
   hairline: '#d4e0ed',
   carbon: '#0a0a0a',
@@ -55,4 +60,42 @@ export const drawPanelColors = {
 
 export const filterColors = {
   badgeColor: colors.signalBlue,
+};
+
+// Props de color del TopBar (barra superior con buscador + acciones), usado en AppLayout.
+export const topBarColors = {
+  bgColor: '#e5f0fcff',
+  textColor: colors.inkNavy,
+  borderColor: colors.hairline,
+  iconColor: colors.slateGray,
+  accentColor: colors.signalBlue,
+  searchBgColor: colors.paper,
+  actionBgColor: colors.paper,
+  actionBorderColor: colors.hairline,
+  actionHoverBgColor: '#dbe7f6',
+  actionHoverTextColor: colors.inkNavy,
+  actionHoverBorderColor: '#c3d5e8',
+  dividerColor: colors.hairline,
+  badgeBgColor: colors.danger,
+  badgeTextColor: colors.paper,
+};
+
+// Props de color del panel flotante de notificaciones que abre el botón de campana del TopBar.
+export const notificationsPanelColors = {
+  bgColor: '#e5f0fcff',
+  iconColor: colors.inkNavy,
+  itemBgColor: colors.cloud,
+  itemBorderColor: colors.hairline,
+  itemIconColor: colors.slateGray,
+  textColor: colors.inkNavy,
+};
+
+// Props de color del CommandPalette (menú Ctrl/Cmd+K) que embebe el propio TopBar.
+export const commandPaletteColors = {
+  paletteBgColor: colors.paper,
+  paletteTextColor: colors.inkNavy,
+  paletteBorderColor: colors.hairline,
+  paletteIconColor: colors.slateGray,
+  paletteAccentColor: colors.signalBlue,
+  paletteCategoryColor: colors.slateGray,
 };

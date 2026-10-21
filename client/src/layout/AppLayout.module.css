@@ -1,0 +1,10 @@
+/* El Sidebar de anteriority-ui trae su propio height: 100vh fijo, independiente
+   del alto real del documento. Si el contenido de la página crece más que la
+   pantalla, el documento se alarga pero el Sidebar se queda pegado en su 100vh
+   original y se corta. Se fuerza a que use el 100% del alto de este layout
+   (que sí es 100vh real) en vez de su propio 100vh — mismo patrón usado en los
+   demás proyectos que consumen este componente. */
+.appLayout > aside {
+  height: 100% !important;
+  max-height: 100% !important;
+}

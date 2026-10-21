@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, CalendarPicker, MultilinePlaceholder, Barnner } from 'anteriority-ui';
-import { Plus, Pencil, Trash2, Undo2 } from 'lucide-react';
-import { getComodatos, createComodato, updateComodato, deleteComodato, registrarDevolucion } from '../services/comodatos';
-import { getEstudiantes } from '../services/estudiantes';
-import { getInstrumentos } from '../services/instrumentos';
-import { esMenorDeEdad } from '../utils/edad';
-import { tableColors } from '../theme/tokens';
-import { COMMON, COMODATOS as TXT, INSTRUMENTOS } from '../constants/text';
+import { useOutletContext } from 'react-router-dom';
+import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, CalendarPicker, MultilinePlaceholder } from 'anteriority-ui';
+import FormMessage from '../../../components/FormMessage';
+import { Plus } from 'lucide-react';
+import { getComodatos, createComodato, updateComodato, deleteComodato, registrarDevolucion } from '../../../services/comodatos';
+import { getEstudiantes } from '../../../services/estudiantes';
+import { getInstrumentos } from '../../../services/instrumentos';
+import { esMenorDeEdad } from '../../../utils/edad';
+import { tableColors } from '../../../theme/tokens';
+import { COMMON, COMODATOS as TXT, INSTRUMENTOS } from '../../../constants/text';
 
 const FORM_INICIAL = {
   folio_contrato: '',
@@ -23,6 +25,7 @@ function badgeTypeEstado(row) {
 }
 
 export default function Comodatos() {
+  const { search } = useOutletContext() ?? {};
   const [comodatos, setComodatos] = useState([]);
   const [estudiantes, setEstudiantes] = useState([]);
   const [instrumentos, setInstrumentos] = useState([]);
@@ -150,7 +153,14 @@ export default function Comodatos() {
     }
   };
 
-  const dataFiltrada = filtroEstado ? comodatos.filter((c) => c.estado === filtroEstado) : comodatos;
+  const dataFiltrada = comodatos
+    .filter((c) => !filtroEstado || c.estado === filtroEstado)
+    .filter((c) =>
+      !search ||
+      `${c.folio_contrato} ${c.estudiante?.nombre ?? ''} ${c.estudiante?.apellido ?? ''} ${c.instrumento?.nombre ?? ''}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+    );
 
   const columns = useMemo(
     () => [
@@ -178,9 +188,9 @@ export default function Comodatos() {
         label: COMMON.actions,
         type: 'actions',
         actions: [
-          { label: TXT.registrarDevolucion, icon: Undo2, onClick: abrirDevolucion, disabled: (row) => row.estado !== 'ACTIVO' },
-          { label: COMMON.edit, icon: Pencil, onClick: abrirEditar, disabled: (row) => row.estado !== 'ACTIVO' },
-          { label: COMMON.delete, icon: Trash2, onClick: setAEliminar },
+          { label: TXT.registrarDevolucion, onClick: abrirDevolucion, disabled: (row) => row.estado !== 'ACTIVO' },
+          { label: COMMON.edit, onClick: abrirEditar, disabled: (row) => row.estado !== 'ACTIVO' },
+          { label: COMMON.delete, onClick: setAEliminar },
         ],
       },
     ],
@@ -207,6 +217,7 @@ export default function Comodatos() {
         error={error}
         onRetry={cargar}
         emptyMessage={TXT.emptyMessage}
+        scrollFooter
         {...tableColors}
       />
 
@@ -227,7 +238,7 @@ export default function Comodatos() {
           onSubmit={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
         >
-          {formError && <Barnner type="danger">{formError}</Barnner>}
+          {formError && <FormMessage type="danger">{formError}</FormMessage>}
 
           <TextField
             label={TXT.fields.folioContrato}
@@ -247,11 +258,11 @@ export default function Comodatos() {
           />
 
           {estudianteSeleccionado && (
-            <Barnner type={esMenorDeEdad(estudianteSeleccionado.fecha_nacimiento) ? 'warning' : 'default'}>
+            <FormMessage type={esMenorDeEdad(estudianteSeleccionado.fecha_nacimiento) ? 'warning' : 'default'}>
               {esMenorDeEdad(estudianteSeleccionado.fecha_nacimiento)
                 ? TXT.menorConRepresentante(estudianteSeleccionado.representante?.nombre, estudianteSeleccionado.representante?.apellido)
                 : TXT.mayorDeEdad}
-            </Barnner>
+            </FormMessage>
           )}
 
           <Selector
@@ -293,7 +304,7 @@ export default function Comodatos() {
           onSubmit={confirmarDevolucion}
           style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
         >
-          {devolucionError && <Barnner type="danger">{devolucionError}</Barnner>}
+          {devolucionError && <FormMessage type="danger">{devolucionError}</FormMessage>}
 
           <Selector
             label={TXT.fields.estadoInstrumentoRecibido}

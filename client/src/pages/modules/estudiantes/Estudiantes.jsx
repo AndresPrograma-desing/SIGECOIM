@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TableB, DrawPanel, AlertModal, Button, TextField, CalendarPicker, Barnner } from 'anteriority-ui';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { getEstudiantes, createEstudiante, updateEstudiante, deleteEstudiante } from '../services/estudiantes';
-import { calcularEdad, esMenorDeEdad } from '../utils/edad';
-import { tableColors } from '../theme/tokens';
-import { COMMON, ESTUDIANTES as TXT } from '../constants/text';
+import { useOutletContext } from 'react-router-dom';
+import { TableB, DrawPanel, AlertModal, Button, TextField, CalendarPicker } from 'anteriority-ui';
+import FormMessage from '../../../components/FormMessage';
+import { Plus } from 'lucide-react';
+import { getEstudiantes, createEstudiante, updateEstudiante, deleteEstudiante } from '../../../services/estudiantes';
+import { calcularEdad, esMenorDeEdad, esFechaFutura } from '../../../utils/edad';
+import { tableColors } from '../../../theme/tokens';
+import { COMMON, ESTUDIANTES as TXT } from '../../../constants/text';
 
 const FORM_INICIAL = {
   cedula: '',
@@ -22,6 +24,7 @@ const FORM_INICIAL = {
 };
 
 export default function Estudiantes() {
+  const { search } = useOutletContext() ?? {};
   const [estudiantes, setEstudiantes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -88,6 +91,12 @@ export default function Estudiantes() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+
+    if (esFechaFutura(formData.fecha_nacimiento)) {
+      setFormError(TXT.futureBirthdateError);
+      return;
+    }
+
     setSaving(true);
     try {
       if (editando) {
@@ -131,8 +140,8 @@ export default function Estudiantes() {
         label: COMMON.actions,
         type: 'actions',
         actions: [
-          { label: COMMON.edit, icon: Pencil, onClick: abrirEditar },
-          { label: COMMON.delete, icon: Trash2, onClick: setAEliminar },
+          { label: COMMON.edit, onClick: abrirEditar },
+          { label: COMMON.delete, onClick: setAEliminar },
         ],
       },
     ],
@@ -142,6 +151,12 @@ export default function Estudiantes() {
   const requiredFields = esMenor
     ? ['nombre', 'apellido', 'fecha_nacimiento', 'rep_cedula', 'rep_nombre', 'rep_apellido', 'rep_telefono', 'rep_direccion']
     : ['nombre', 'apellido', 'fecha_nacimiento'];
+
+  const dataFiltrada = search
+    ? estudiantes.filter((e) =>
+        `${e.nombre} ${e.apellido} ${e.cedula ?? ''}`.toLowerCase().includes(search.toLowerCase()),
+      )
+    : estudiantes;
 
   return (
     <div>
@@ -157,12 +172,13 @@ export default function Estudiantes() {
 
       <TableB
         columns={columns}
-        data={estudiantes}
+        data={dataFiltrada}
         rowKey="id"
         loading={loading}
         error={error}
         onRetry={cargar}
         emptyMessage={TXT.emptyMessage}
+        scrollFooter
         {...tableColors}
       />
 
@@ -184,11 +200,28 @@ export default function Estudiantes() {
           onSubmit={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
         >
-          {formError && <Barnner type="danger">{formError}</Barnner>}
+          {formError && <FormMessage type="danger">{formError}</FormMessage>}
 
-          <TextField label={TXT.fields.cedula} name="cedula" value={formData.cedula} onChange={handleChange} />
-          <TextField label={TXT.fields.nombre} name="nombre" value={formData.nombre} onChange={handleChange} required />
-          <TextField label={TXT.fields.apellido} name="apellido" value={formData.apellido} onChange={handleChange} required />
+          <TextField
+           label={TXT.fields.cedula} 
+           name="cedula" 
+           value={formData.cedula} 
+           onChange={handleChange} 
+           required
+           />
+          <TextField label={TXT.fields.nombre}
+           name="nombre"
+            value={formData.nombre}
+            onChange={handleChange} 
+            required 
+            />
+          <TextField 
+          label={TXT.fields.apellido}
+           name="apellido" 
+           value={formData.apellido}
+            onChange={handleChange}
+             required 
+             />
           <CalendarPicker
             label={TXT.fields.fechaNacimiento}
             name="fecha_nacimiento"
@@ -201,7 +234,7 @@ export default function Estudiantes() {
 
           {esMenor && (
             <>
-              <Barnner type="warning">{TXT.minorWarning}</Barnner>
+              <FormMessage type="warning">{TXT.minorWarning}</FormMessage>
               <TextField label={TXT.fields.repCedula} name="rep_cedula" value={formData.rep_cedula} onChange={handleChange} required />
               <TextField label={TXT.fields.repNombre} name="rep_nombre" value={formData.rep_nombre} onChange={handleChange} required />
               <TextField label={TXT.fields.repApellido} name="rep_apellido" value={formData.rep_apellido} onChange={handleChange} required />
