@@ -5,6 +5,9 @@ import Estudiante from './Estudiante.js';
 import Instrumento from './Instrumento.js';
 import Comodato from './Comodato.js';
 import Devolucion from './Devolucion.js';
+import Solicitud from './Solicitud.js';
+import HistorialUbicacion from './HistorialUbicacion.js';
+import Configuracion from './Configuracion.js';
 
 // --- Relaciones ---
 
@@ -32,6 +35,30 @@ Devolucion.belongsTo(Comodato, { foreignKey: 'comodato_id', as: 'comodato' });
 Usuario.hasMany(Devolucion, { foreignKey: 'usuario_id', as: 'devoluciones' });
 Devolucion.belongsTo(Usuario, { foreignKey: 'usuario_id', as: 'usuario' });
 
+// Estudiante & Solicitud (1:N)
+Estudiante.hasMany(Solicitud, { foreignKey: 'estudiante_id', as: 'solicitudes' });
+Solicitud.belongsTo(Estudiante, { foreignKey: 'estudiante_id', as: 'estudiante' });
+
+// Instrumento & Solicitud (1:N)
+Instrumento.hasMany(Solicitud, { foreignKey: 'instrumento_id', as: 'solicitudes' });
+Solicitud.belongsTo(Instrumento, { foreignKey: 'instrumento_id', as: 'instrumento' });
+
+// Usuario & Solicitud (1:N) - Usuario que aprueba/rechaza la solicitud
+Usuario.hasMany(Solicitud, { foreignKey: 'usuario_id', as: 'solicitudes' });
+Solicitud.belongsTo(Usuario, { foreignKey: 'usuario_id', as: 'usuario' });
+
+// Comodato & Solicitud (1:1) - Comodato generado al aprobar la solicitud
+Comodato.hasOne(Solicitud, { foreignKey: 'comodato_id', as: 'solicitud' });
+Solicitud.belongsTo(Comodato, { foreignKey: 'comodato_id', as: 'comodato' });
+
+// Instrumento & HistorialUbicacion (1:N)
+Instrumento.hasMany(HistorialUbicacion, { foreignKey: 'instrumento_id', as: 'historial_ubicaciones' });
+HistorialUbicacion.belongsTo(Instrumento, { foreignKey: 'instrumento_id', as: 'instrumento' });
+
+// Usuario & HistorialUbicacion (1:N) - Usuario que registra el cambio de ubicación
+Usuario.hasMany(HistorialUbicacion, { foreignKey: 'usuario_id', as: 'historial_ubicaciones' });
+HistorialUbicacion.belongsTo(Usuario, { foreignKey: 'usuario_id', as: 'usuario' });
+
 export {
   sequelize,
   Usuario,
@@ -39,5 +66,8 @@ export {
   Estudiante,
   Instrumento,
   Comodato,
-  Devolucion
+  Devolucion,
+  Solicitud,
+  HistorialUbicacion,
+  Configuracion
 };

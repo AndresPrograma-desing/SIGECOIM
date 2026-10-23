@@ -4,10 +4,13 @@ import {
   createComodato,
   registrarDevolucion,
   updateComodato,
-  deleteComodato
+  deleteComodato,
+  getRepresentantesPorVencer
 } from '../controllers/comodatoController.js';
 
 const router = Router();
+
+router.get('/alertas/por-vencer', getRepresentantesPorVencer);
 
 router.get('/', getComodatos);
 router.post('/', createComodato);

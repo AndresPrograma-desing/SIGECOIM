@@ -54,6 +54,14 @@ const Comodato = sequelize.define('COMODATO', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  condicion_inicial: {
+    type: DataTypes.ENUM('NUEVO', 'BUENO', 'REGULAR', 'MALO'),
+    allowNull: true,
+  },
+  observaciones_iniciales: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
 }, {
   tableName: 'COMODATO',
   timestamps: false,

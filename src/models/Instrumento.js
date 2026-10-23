@@ -41,6 +41,14 @@ const Instrumento = sequelize.define('INSTRUMENTO', {
     type: DataTypes.STRING(255),
     allowNull: true,
   },
+  tipo: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+  },
+  ubicacion: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
   estado_conservacion: {
     type: DataTypes.ENUM('NUEVO', 'BUENO', 'REGULAR', 'MALO'),
     allowNull: false,

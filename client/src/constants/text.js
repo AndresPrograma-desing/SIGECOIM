@@ -27,6 +27,7 @@ export const NAV = {
   instrumentos: 'Instrumentos',
   comodatos: 'Comodatos',
   usuarios: 'Usuarios',
+  dashboard: 'Alertas y Reportes',
   configuracion: 'Configuración',
   logout: 'Cerrar sesión',
   searchPlaceholder: 'Buscar...',
@@ -92,6 +93,7 @@ export const INSTRUMENTOS = {
     medida: 'Medida',
     conservacion: 'Conservación',
     disponibilidad: 'Disponibilidad',
+    ubicacion: 'Ubicación',
   },
   fields: {
     codigoInventario: 'Código de inventario',
@@ -99,6 +101,7 @@ export const INSTRUMENTOS = {
     subfamilia: 'Subfamilia',
     nombre: 'Nombre del instrumento',
     marca: 'Marca',
+    marcaPlaceholder: 'Ej: Yamaha, Stagg, Cremona...',
     modelo: 'Modelo',
     numeroSerie: 'Número de serie',
     medida: 'Medida',
@@ -106,9 +109,26 @@ export const INSTRUMENTOS = {
     color: 'Color',
     accesorios: 'Accesorios',
     accesoriosPlaceholder: 'Estuche, arco, boquilla...',
+    tipo: 'Tipo de instrumento',
+    ubicacion: 'Ubicación física',
+    ubicacionPlaceholder: 'Ej: Depósito A, Estante 3, Sala de ensayo...',
     estadoConservacion: 'Estado de conservación',
     disponibilidad: 'Disponibilidad',
   },
+  marcasComunes: ['Yamaha', 'Stagg', 'Cremona', 'Hofner', 'Jupiter', 'Cecilio'],
+  historialUbicacionTitle: 'Historial de ubicación',
+  historialUbicacionAction: 'Ver historial de ubicación',
+  historialUbicacionEmpty: 'Este instrumento no registra cambios de ubicación.',
+  historialUbicacionColumns: {
+    fecha: 'Fecha',
+    anterior: 'Ubicación anterior',
+    nueva: 'Ubicación nueva',
+    usuario: 'Registrado por',
+  },
+  stockPorTipoAction: 'Ver stock por tipo',
+  stockPorTipoTitle: 'Stock por tipo de instrumento',
+  stockPorTipoEmpty: 'Aún no hay instrumentos clasificados por tipo.',
+  stockPorTipoSinClasificar: 'Sin tipo asignado',
   estadosConservacion: [
     { value: 'NUEVO', label: 'Nuevo' },
     { value: 'BUENO', label: 'Bueno' },
@@ -177,6 +197,29 @@ export const INSTRUMENTOS = {
       ],
     },
   ],
+  // Catálogo fijo de tipos para clasificar y agrupar el stock (HU-25/HU-27).
+  // Se deriva de los mismos instrumentos típicos ya listados en "familias".
+  tiposInstrumento: [
+    { value: 'Violín', label: 'Violín' },
+    { value: 'Viola', label: 'Viola' },
+    { value: 'Violonchelo', label: 'Violonchelo' },
+    { value: 'Contrabajo', label: 'Contrabajo' },
+    { value: 'Arpa', label: 'Arpa' },
+    { value: 'Guitarra', label: 'Guitarra' },
+    { value: 'Flauta traversa', label: 'Flauta traversa' },
+    { value: 'Oboe', label: 'Oboe' },
+    { value: 'Clarinete', label: 'Clarinete' },
+    { value: 'Fagot', label: 'Fagot' },
+    { value: 'Trompeta', label: 'Trompeta' },
+    { value: 'Corno francés', label: 'Corno francés' },
+    { value: 'Trombón', label: 'Trombón' },
+    { value: 'Tuba', label: 'Tuba' },
+    { value: 'Timbales', label: 'Timbales' },
+    { value: 'Xilófono', label: 'Xilófono' },
+    { value: 'Redoblante', label: 'Redoblante' },
+    { value: 'Platillos', label: 'Platillos' },
+    { value: 'Triángulo', label: 'Triángulo' },
+  ],
 };
 
 export const COMODATOS = {
@@ -215,12 +258,70 @@ export const COMODATOS = {
     fechaDevolucionPrevista: 'Fecha de devolución prevista',
     estadoInstrumentoRecibido: 'Estado del instrumento recibido',
     observaciones: 'Observaciones',
+    condicionInicial: 'Condición inicial del instrumento',
+    observacionesIniciales: 'Observaciones de la condición inicial',
+    desde: 'Devolución prevista desde',
+    hasta: 'Devolución prevista hasta',
   },
   estados: [
     { value: 'ACTIVO', label: 'Activo' },
     { value: 'FINALIZADO', label: 'Finalizado' },
     { value: 'VENCIDO', label: 'Vencido' },
   ],
+  instrumentoNoDisponibleReparacion: 'Este instrumento requiere reparación y no puede ser asignado.',
+  limitePrestamoError: 'El estudiante ya alcanzó el límite de instrumentos en comodato activo.',
+  filtrosAvanzadosAction: 'Filtros avanzados',
+  filtrosAvanzadosTitle: 'Filtros avanzados de comodatos',
+  filtrosAvanzadosApply: 'Aplicar filtros',
+  filtrosAvanzadosClear: 'Limpiar filtros',
+  exportarPdf: 'Exportar PDF',
+  exportarPdfError: 'No se pudo generar el reporte en PDF.',
+  imprimirContrato: 'Imprimir contrato',
+  imprimirContratoError: 'No se pudo generar el contrato en PDF.',
+};
+
+export const CONTRATO_PDF = {
+  institucion: 'Núcleo de la Sinfónica Infantil',
+  titulo: 'Contrato de Comodato de Instrumento Musical',
+  seccionInstrumento: 'Datos del instrumento',
+  seccionEstudiante: 'Datos del estudiante',
+  seccionRepresentante: 'Datos del representante legal',
+  seccionFechas: 'Vigencia del comodato',
+  seccionCondicion: 'Condición inicial del instrumento',
+  firmaAnalista: 'Firma del Analista de Bienes',
+  firmaResponsable: 'Firma del Representante / Estudiante',
+};
+
+export const DASHBOARD = {
+  pageTitle: 'Alertas y Reportes',
+  pageSubtitle: 'Vencimientos, stock por tipo y contacto con representantes.',
+  loadError: 'No se pudieron cargar los datos del tablero.',
+  alertasTitle: 'Comodatos vencidos o por vencer',
+  alertasVentana: (dias) => `Mostrando comodatos vencidos y los que vencen dentro de los próximos ${dias} día(s). Este rango se ajusta desde Configuración.`,
+  alertasEmpty: 'No hay comodatos vencidos ni próximos a vencer.',
+  alertasVencidos: 'Vencidos',
+  alertasPorVencer: 'Por vencer',
+  alertasColumns: {
+    folio: 'Correlativo',
+    estudiante: 'Estudiante',
+    instrumento: 'Instrumento',
+    representante: 'Representante',
+    telefono: 'Teléfono',
+    fechaPrevista: 'Devolución prevista',
+  },
+  stockTitle: 'Stock por tipo de instrumento',
+};
+
+export const CONFIGURACION = {
+  pageTitle: 'Configuración',
+  pageSubtitle: 'Ajustes generales del sistema.',
+  loadError: 'No se pudo cargar la configuración.',
+  saveError: 'No se pudo guardar la configuración.',
+  saveSuccess: 'Configuración guardada con éxito.',
+  diasAlertaLabel: 'Días de anticipación de alertas',
+  diasAlertaHelper: 'Cantidad de días, antes de la devolución prevista, a partir de los cuales un comodato aparece como "por vencer" en Alertas y Reportes.',
+  diasAlertaError: 'Debe ser un número entero entre 1 y 365.',
+  saveButton: 'Guardar cambios',
 };
 
 export const USUARIOS = {
@@ -261,43 +362,3 @@ export const USUARIOS = {
   ],
 };
 
-export const CONFIGURACION = {
-  pageTitle: 'Configuración',
-  pageSubtitle: 'Ajustes generales e integraciones del sistema.',
-  contextHubTitle: 'ContextHub',
-  contextHubLinkLabel: 'Abrir ContextHub',
-  contextHubLinkUrl: 'https://context-hub-memory.vercel.app/',
-  contextHubMarkdown: `### ¿Qué es ContextHub?
-
-ContextHub es el proveedor de autenticación externo que SIGECOIM usa para el inicio de sesión. En vez de validar las credenciales únicamente contra esta base de datos local, el login de SIGECOIM se integra mediante el SDK de ContextHub, que mantiene su propio registro de usuarios y contraseñas.
-
-### ¿Para qué sirve en este sistema?
-
-Cada usuario de SIGECOIM (email y contraseña) tiene una cuenta espejo en ContextHub. Cuando creás un usuario nuevo desde "Usuarios", SIGECOIM lo registra automáticamente también en ContextHub. El riesgo aparece al editar: si cambiás el correo o la contraseña de un usuario desde SIGECOIM, ese cambio puede no reflejarse en ContextHub si la cuenta no quedó vinculada correctamente, dejando al usuario con credenciales distintas en cada lado.
-
-### ¿Por qué usar ContextHub como proveedor de login?
-
-En vez de que SIGECOIM valide usuario y contraseña directamente contra su propia base de datos, delega esa validación en ContextHub a través de su SDK de login embebido. Esto trae ventajas de seguridad y mantenimiento que sería costoso reimplementar en este proyecto:
-
-- **El navegador nunca recibe un token de sesión real** — Al iniciar sesión, ContextHub entrega un ticket de un solo uso válido por 2 minutos. Ese ticket solo sirve si el backend de SIGECOIM lo canjea con su client secret, que nunca se expone al navegador.
-- **Protección contra ataques de fuerza bruta incluida** — El login y la recuperación de contraseña están limitados por integración (rate limiting), y un intento fallido no revela si fue el correo o la contraseña lo que falló, evitando enumerar usuarios.
-- **Recuperación de contraseña lista para usar** — El flujo de "olvidé mi contraseña" (código de verificación por correo) ya viene resuelto por ContextHub, sin que SIGECOIM tenga que operar su propio sistema de envío de correos ni de códigos temporales.
-- **Pool de usuarios cerrado por integración** — Una cuenta de ContextHub solo puede iniciar sesión en SIGECOIM si fue vinculada explícitamente a esta integración.
-
-### Sincronización manual
-
-Usá el botón de abajo para emparejar por correo electrónico los usuarios locales con sus cuentas en ContextHub. Es útil si editaste el correo o la contraseña de un usuario y la integración quedó desactualizada, o si un usuario no puede iniciar sesión pese a tener credenciales válidas en SIGECOIM.`,
-  syncButton: 'Sincronizar con ContextHub',
-  syncing: 'Sincronizando...',
-  syncError: 'No se pudo sincronizar con ContextHub.',
-  syncSuccess: (actualizados) =>
-    actualizados === 0
-      ? 'Sincronización completa. No había usuarios por actualizar.'
-      : `Sincronización completa. ${actualizados} usuario(s) actualizado(s).`,
-  syncSummary: {
-    totalContextHub: 'Usuarios en ContextHub',
-    totalLocal: 'Usuarios locales',
-    actualizados: 'Vinculados en esta sincronización',
-    sinCoincidencia: 'Sin cuenta en ContextHub',
-  },
-};
