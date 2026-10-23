@@ -1,3 +1,4 @@
 import { request } from 'anteriority-ui/common/api/client';
 
-export const syncContextHub = () => request('/usuarios/sync-contexthub', { method: 'POST' });
+export const getConfiguracion = () => request('/configuracion');
+export const updateConfiguracion = (data) => request('/configuracion', { method: 'PUT', body: data });

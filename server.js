@@ -7,6 +7,8 @@ import estudianteRoutes from './src/routes/estudianteRoutes.js';
 import instrumentoRoutes from './src/routes/instrumentoRoutes.js';
 import comodatoRoutes from './src/routes/comodatoRoutes.js';
 import usuarioRoutes from './src/routes/usuarioRoutes.js';
+import solicitudRoutes from './src/routes/solicitudRoutes.js';
+import configuracionRoutes from './src/routes/configuracionRoutes.js';
 
 dotenv.config();
 
@@ -47,6 +49,8 @@ app.use('/api/estudiantes', estudianteRoutes);
 app.use('/api/instrumentos', instrumentoRoutes);
 app.use('/api/comodatos', comodatoRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/solicitudes', solicitudRoutes);
+app.use('/api/configuracion', configuracionRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {

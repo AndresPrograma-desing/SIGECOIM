@@ -417,7 +417,7 @@ import Button, { VARIANTS, SIZES, COLORS } from '../Button'; // export default +
 />
 ```
 
-**Notas:** Es un `React.forwardRef`. Expone `Button.VARIANTS`, `Button.SIZES` y `Button.COLORS` como propiedades estáticas además de los named exports.
+**Notas:** Es un `React.forwardRef`. Expone `Button.VARIANTS`, `Button.SIZES` y `Button.COLORS` como propiedades estáticas además de los named exports. Para asignarle un atajo de teclado global, envolverlo con `KeyboardShortcut` (ver sección correspondiente) en vez de una prop propia — así el mismo wrapper sirve para `Button`, `Input` o cualquier otro elemento.
 
 ---
 
@@ -817,6 +817,8 @@ import Container from '../Container'; // export default (index.jsx)
 | `pageSizeOptions` | array | `[5, 10, 20, 50]` | Opciones de tamaño de página |
 | `onPageSizeChange` | function | — | Handler de cambio de tamaño de página |
 | `borderColor` | string | `'rgba(0, 0, 0, 0.08)'` | Color del borde del contenedor (`--container-border`). Por defecto un negro claro sutil. |
+| `bgImage` | string | — | URL de una imagen de fondo, renderizada detrás del contenido (capa independiente del `backdrop-filter` existente) |
+| `blurBackground` | boolean | `false` | Difumina la imagen de `bgImage` (no afecta el `backdrop-filter` del contenido, que sigue activo siempre por compatibilidad) |
 | `...props` | — | — | Cualquier otra prop (ej. `onClick`, `id`, `style`) se pasa al `div` raíz |
 
 **Ejemplos:**
@@ -831,7 +833,14 @@ import Container from '../Container'; // export default (index.jsx)
 >
   <p>Lista de resultados paginados.</p>
 </Container>
+
+<Container bgImage="/fondo.jpg" blurBackground style={{ minHeight: '100vh' }}>
+  <p>Contenedor usado como fondo de pantalla completa, con imagen difuminada detrás.</p>
+</Container>
 ```
+
+**Notas:**
+- Para usar `Container` como fondo de pantalla completa, combinar con `style={{ minHeight: '100vh', maxWidth: 'none' }}` (el `max-width: 1300px` por defecto está pensado para secciones de contenido, no para fondos).
 
 ---
 
@@ -1104,6 +1113,90 @@ import DrawPanel from '../DrawPanel'; // export default (index.jsx)
 
 ---
 
+### FileListItem
+
+Fila de lista de archivos: checkbox de selección opcional, ícono cuadrado de color según el tipo de archivo (mismo mapeo que [MediaViewer](#mediaviewer), ver [common/icons/fileType.js](#común-iconsfiletypejs)), nombre, metadata (tamaño · fecha) y acciones a la derecha. Las acciones por default son compartir/descargar/eliminar (solo se renderiza el botón cuyo callback se pasa); se pueden reemplazar completamente por botones propios (ej. "Editar") vía la prop `actions`. Pensado para listar varias instancias apiladas (ver story `ListaCompleta`). Responsive: en viewports angostos (`max-width: 480px`) reduce paddings, tamaño del ícono y de los botones de acción; el nombre siempre trunca con ellipsis en vez de desbordar.
+
+**Import:**
+```jsx
+import FileListItem from 'anteriority-ui/screens/components/FileListItem'; // export default, archivo index.jsx
+```
+
+**Uso básico:**
+```jsx
+<FileListItem name="Product Backlog - Happy Pets v2.pdf" size="114.7 KB" date="16/10/2026" />
+
+<FileListItem
+  name="Historias Usuario.docx"
+  size="30.8 KB"
+  date="15/10/2026"
+  selectable
+  selected={selected}
+  onSelectChange={setSelected}
+  onShare={() => share(file)}
+  onDownload={() => download(file)}
+  onDelete={() => remove(file)}
+/>
+```
+
+**Props:**
+
+| Prop | Tipo | Default | Descripción |
+|---|---|---|---|
+| name | string | — | Nombre de archivo a mostrar (también se usa para inferir el ícono/color por extensión). |
+| url | string | — | URL del archivo; si no se pasa `name`, se usa para inferir el tipo igual (no se renderiza como link por sí sola — ver `onClick`/`actions` para eso). |
+| size | string | — | Texto de tamaño ya formateado (ej. `'114.7 KB'`). El componente no formatea bytes — para eso usar `formatFileSize` auxiliar de ser necesario antes de pasarlo. |
+| date | string | — | Texto de fecha ya formateado (ej. `'16/10/2026'`). |
+| selectable | bool | `false` | Muestra el checkbox de selección (MUI `Checkbox`) a la izquierda. |
+| selected | bool | `false` | Estado controlado del checkbox. |
+| onSelectChange | function | — | Callback `(checked: bool)` al tildar/destildar. |
+| selectLabel | string | `'Seleccionar archivo'` | `aria-label` del checkbox. |
+| onShare | function | — | Si se pasa, renderiza el botón de compartir (ícono `Share2`) en las acciones default. |
+| onDownload | function | — | Si se pasa, renderiza el botón de descarga (ícono `Download`) en las acciones default. |
+| onDelete | function | — | Si se pasa, renderiza el botón de eliminar (ícono `Trash2`, se pinta rojo en hover) en las acciones default. |
+| shareLabel | string | `'Compartir'` | `aria-label`/`title` del botón de compartir. |
+| downloadLabel | string | `'Descargar'` | `aria-label`/`title` del botón de descargar. |
+| deleteLabel | string | `'Eliminar'` | `aria-label`/`title` del botón de eliminar. |
+| actions | node | — | Si se pasa (incluso `null`), reemplaza por completo el bloque de acciones default — útil para botones propios como "Editar". El click dentro de este bloque no dispara el `onClick` de la fila (`stopPropagation`). |
+| onClick | function | — | Si se pasa, toda la fila es clickeable (cursor pointer, hover, `role="button"`, accesible por teclado). |
+| bgColor | string | `'transparent'` | Color de fondo de la fila. |
+| borderColor | string | `'#e2e8f0'` | Color de borde de la fila. |
+| textColor | string | `'#1e293b'` | Color del nombre de archivo. |
+| metaColor | string | `'#64748b'` | Color del texto de metadata (tamaño/fecha) y de los íconos de acción. |
+| className | string | `''` | Clase adicional para la fila. |
+| style | object | — | Estilos inline adicionales para la fila. |
+
+**Ejemplos:**
+```jsx
+// Lista completa con selección individual y eliminar que saca el item del estado
+{files.map((file) => (
+  <FileListItem
+    key={file.id}
+    name={file.name}
+    size={file.size}
+    date={file.date}
+    selectable
+    selected={file.selected}
+    onSelectChange={(checked) => toggleSelected(file.id, checked)}
+    onShare={() => share(file)}
+    onDownload={() => download(file)}
+    onDelete={() => removeFile(file.id)}
+  />
+))}
+
+// Acciones completamente custom (ej. un botón "Editar" en vez de compartir/descargar/eliminar)
+<FileListItem
+  name="reporte-ventas.xlsx"
+  size="45 KB"
+  date="01/10/2026"
+  actions={<Button size="small" onClick={() => editFile(file)}>Editar</Button>}
+/>
+```
+
+**Notas:** El ícono cuadrado de color no tiene prop propia — viene del tipo de archivo detectado (mismo mapeo que `MediaViewer`), igual que su glifo blanco. No persiste selección ni hace llamadas de red — es puramente presentacional/controlado.
+
+---
+
 ### Filter
 
 Barra de acciones para filtros de una tabla/listado: botón "Filtrar" que abre un panel lateral (drawer) con los campos de filtro, badge con el conteo de filtros activos, botón "Limpiar" e indicador del término de búsqueda actual.
@@ -1371,6 +1464,24 @@ import HoursPicker from '../HoursPicker/index'; // export default, archivo index
 
 ---
 
+### Icons (lucide-react)
+
+No es un componente con props propias, sino un re-export: `anteriority-ui/lucide` expone [lucide-react](https://lucide.dev/) completo, para que un proyecto consumidor importe cualquier ícono de lucide **sin instalar `lucide-react` por su cuenta** — queda disponible transitivamente al instalar `anteriority-ui` (ya es una `dependency` de la librería, usada internamente por la mayoría de los componentes).
+
+**Import:**
+```jsx
+import { Home, Bell, Search } from 'anteriority-ui/lucide';
+```
+
+**Uso básico:**
+```jsx
+<Home size={24} color="#0ea5e9" />
+```
+
+**Notas:** Los nombres son exactamente los que exporta `lucide-react` — ver el [buscador oficial](https://lucide.dev/icons/). Es un re-export de 1 línea (`export * from 'lucide-react'`) en [lucide.js](lucide.js), en la raíz del paquete.
+
+---
+
 ### Icons (react-icons)
 
 No es un componente con props propias, sino un mecanismo de subpaths: `anteriority-ui` empaqueta [react-icons](https://react-icons.github.io/react-icons/) completo como dependency propia (igual que `lucide-react`), para que un proyecto consumidor use cualquier ícono de cualquier pack de react-icons (Simple Icons, Font Awesome, Material Design, Bootstrap Icons, Ionicons, etc.) **sin instalar `react-icons` por su cuenta** — queda disponible transitivamente al instalar `anteriority-ui`.
@@ -1445,6 +1556,53 @@ import { IconCatalog } from 'anteriority-ui';
 ```
 
 **Notas:** El selector de pack reutiliza [Selector](#selector) y el buscador de texto reutiliza [Search](#search) (en modo `freeSolo`, sin `options`, como `TextField` libre) en vez de elementos nativos — consistente con el resto de la librería. Muestra hasta 200 resultados por búsqueda (`MAX_RESULTS` en `constants.js`) para no renderizar packs completos de miles de íconos de una sola vez. Cada resultado incluye el ícono renderizado junto a su nombre exacto envuelto en [CopyText](#copytext), para copiarlo con un clic y pegarlo directo en un import. No expone `size`/`color` como props porque es una herramienta de exploración, no un ícono para usar en UI final — una vez encontrado el nombre, se importa directo desde el subpath del pack correspondiente (ver [Icons (react-icons)](#icons-react-icons)).
+
+---
+
+### ImagePastePreview
+
+Fila de chips (miniatura + badge con label + botón de quitar) para mostrar las imágenes extraídas por el hook `usePasteImage` (`common/hooks/usePasteImage.js`). Es la pieza visual compartida por [MultilinePlaceholder](#multilineplaceholder) y [PasteImageField](#pasteimagefield) para no duplicar ese bloque entre ambos — también puede usarse standalone si se arma una integración de paste propia con el hook.
+
+**Import:**
+```jsx
+import ImagePastePreview from 'anteriority-ui/screens/components/ImagePastePreview'; // export default, archivo index.jsx
+```
+
+**Uso básico:**
+```jsx
+const { onPaste, previews, clearPreview } = usePasteImage({ onImagePaste });
+
+<textarea onPaste={onPaste} />
+<ImagePastePreview previews={previews} onRemove={clearPreview} />
+```
+
+**Props:**
+
+| Prop | Tipo | Default | Descripción |
+|---|---|---|---|
+| previews | array | — | Array de previews tal como los devuelve `usePasteImage` (`{ id, url, file }` por cada imagen). Si está vacío o es `undefined`, el componente no renderiza nada. |
+| onRemove | function | — | Callback `(id)` invocado al hacer click en el botón de quitar de un chip. |
+| label | string | `'Imagen pegada'` | Texto del badge (`Barnner`) de cada chip (y `alt` de la miniatura). |
+| removeLabel | string | `'Quitar imagen'` | `aria-label` del botón de quitar. |
+| borderColor | string | `'#e2e8f0'` | Color de borde del chip contenedor (miniatura + badge + botón). |
+| thumbBorderColor | string | `'#cbd5e1'` | Color de borde propio de la miniatura (el `<img>`). |
+| labelBgColor | string | `'#dbeafe'` | Color de fondo del badge del label (prop `bgColor` de `Barnner`). |
+| labelTextColor | string | `'#1e40af'` | Color de texto del badge del label (prop `textColor` de `Barnner`). |
+| className | string | `''` | Clase adicional para el contenedor de la lista. |
+| style | object | — | Estilos inline adicionales para el contenedor de la lista. |
+
+**Ejemplos:**
+```jsx
+<ImagePastePreview
+  previews={previews}
+  onRemove={clearPreview}
+  label="Adjunto"
+  labelBgColor="#fce7f3"
+  labelTextColor="#9d174d"
+/>
+```
+
+**Notas:** No sube ni persiste nada — es puramente presentacional; la extracción/estado vive en `usePasteImage`. El badge del label usa [Barnner](#barnner) (el mismo chip que usan las celdas de `TableB`) en vez de un chip reimplementado a mano.
 
 ---
 
@@ -1536,6 +1694,43 @@ import Input from '../Input/index'; // export default, forwardRef, archivo index
 ```
 
 **Notas:** Es un wrapper de `TextField` con `forwardRef`, por lo que la `ref` se reenvía al input nativo.
+
+---
+
+### KeyboardShortcut
+
+Envoltorio genérico que asigna un atajo de teclado global a **cualquier** `children` (`Button`, `Input`, un `<div>` propio, etc.) sin agregar markup propio al DOM — renderiza exactamente el `children` recibido, así que no altera layouts `flex`/`grid` del padre. Internamente usa el hook compartido `useKeyboardShortcut` (`common/hooks/useKeyboardShortcut.js`), el mismo que usan los atajos Ctrl/Cmd+K de `TopBar` y Ctrl/Cmd+B de `Sidebar`.
+
+**Import:**
+```jsx
+import KeyboardShortcut from 'anteriority-ui/screens/components/KeyboardShortcut'; // export default, archivo index.jsx
+```
+
+**Uso básico:**
+```jsx
+<KeyboardShortcut shortcut="ctrl+e" onTrigger={handleEdit}>
+  <Button onClick={handleEdit}>Editar</Button>
+</KeyboardShortcut>
+```
+
+**Props:**
+
+| Prop | Tipo | Default | Descripción |
+|---|---|---|---|
+| children | node | — | El elemento a envolver; se renderiza tal cual, sin wrapper adicional. |
+| shortcut | string | — | Combinación de teclas (ej. `'ctrl+e'`, `'ctrl+shift+a'`, `'cmd+k'`). `ctrl` y `cmd`/`meta` son equivalentes, para que el mismo atajo funcione en Windows/Linux y Mac sin distinguir el sistema operativo. |
+| enabled | boolean | `true` | Si es `false`, el atajo no se registra (útil para deshabilitarlo condicionalmente, ej. cuando el elemento envuelto está disabled). |
+| onTrigger | function | — | Callback invocado cuando se presiona la combinación. |
+| preventDefault | boolean | `true` | Si llama `event.preventDefault()` al disparar el atajo (evita comportamiento default del navegador en esa combinación). |
+
+**Ejemplos:**
+```jsx
+<KeyboardShortcut shortcut="ctrl+shift+f" onTrigger={() => inputRef.current?.focus()}>
+  <TextField inputRef={inputRef} label="Buscar" value={value} onChange={onChange} />
+</KeyboardShortcut>
+```
+
+**Notas:** Es intencionalmente un wrapper y no una prop de `Button` u otro componente puntual — así el mismo mecanismo sirve para cualquier elemento, incluso componentes ajenos a esta librería en un proyecto consumidor. No sube ni persiste nada; es puramente el registro/cleanup del listener de teclado vía `useKeyboardShortcut`.
 
 ---
 
@@ -1671,6 +1866,131 @@ const [value, setValue] = useState('# Hello world');
 
 ---
 
+### MediaViewer
+
+Renderiza un archivo (imagen, video, audio, PDF o cualquier otro tipo) a partir de una `url`. El tipo de media se infiere automáticamente del `mimeType`/`type` o, si no se pasa, de la extensión del `name`/`url`; también se puede forzar explícitamente. Si no hay `type`/`mimeType` ni extensión reconocible (ej. una url de API del tipo `/api/files/42/raw`, o un CDN como `picsum.photos` que no incluye extensión), el componente prueba la `url` en cascada contra un `<img>`/`<video>`/`<audio>` real fuera del DOM visible (ver `autoDetectType` para desactivar esto) — a diferencia de `fetch()`, cargar estas etiquetas para mostrarse no está sujeto a CORS, así que funciona incluso contra CDNs que no mandan `Access-Control-Allow-Origin`. Si ni así se puede determinar el tipo, cae en una tarjeta genérica con ícono cuadrado de color según el tipo de archivo (PDF, Word, Excel, Zip, Markdown, código, etc.) + nombre + tamaño + botón de descarga — ese mapeo extensión → ícono/color vive en [common/icons/fileType.js](#común-iconsfiletypejs) y es compartido con [FileListItem](#filelistitem). Totalmente responsive: imagen/video/iframe de PDF se ajustan al ancho del contenedor padre, con tamaños reducidos en viewports angostos (`max-width: 480px`). Para imagen/video/audio se puede agregar opcionalmente un botón de acción genérico de ancho completo debajo del marco (ver `actionLabel`/`actionIcon`/`onAction`) — no viene activado por default, y no está atado a "descargar": el consumidor decide el texto, el ícono y qué hace al clickearlo (ej. abrir un panel de detalle externo, como el header con flecha de un visor de archivos).
+
+Cuando el tipo resuelve a video y `controls` es `true` (default), el `<video>` no usa los controles nativos del browser: renderiza un reproductor custom (`components/VideoPlayer`) con la paleta de la librería — play/pause central y en la barra inferior, seek bar con preview de tiempo al hover y buscador de tiempo por texto (`mm:ss` o segundos), control de volumen, velocidad de reproducción (0.5x–2x), fullscreen y Picture-in-Picture (si el browser lo soporta), overlay de buffering (usando el componente `Loading`) y overlay de error con reintento. La barra espaciadora pausa/reanuda mientras el mouse está sobre el player o en fullscreen (vía el componente `KeyboardShortcut`, sin capturar la tecla globalmente en el resto de la página). Pasar `controls={false}` devuelve el `<video>` nativo del browser sin ningún control (útil para videos de fondo/autoplay silencioso).
+
+**Import:**
+```jsx
+import MediaViewer from 'anteriority-ui/screens/components/MediaViewer'; // export default, archivo index.jsx
+```
+
+**Uso básico:**
+```jsx
+<MediaViewer url="https://ejemplo.com/foto.png" />
+<MediaViewer url="https://ejemplo.com/video.mp4" />
+<MediaViewer url="https://ejemplo.com/audio.mp3" name="nota-de-voz.mp3" />
+<MediaViewer url="https://ejemplo.com/contrato.docx" name="contrato.docx" size={512000} />
+```
+
+**Props:**
+
+| Prop | Tipo | Default | Descripción |
+|---|---|---|---|
+| url / src | string | — | URL del archivo a mostrar. Si no se pasa ninguna de las dos, el componente no renderiza nada. `src` es alias de `url`. |
+| type / mimeType | string | — | Fuerza el tipo de media en vez de inferirlo. Acepta un mimeType real (`'image/png'`, `'application/pdf'`, etc.) o directamente uno de los valores de `MediaViewer.KIND` (`'image'`, `'video'`, `'audio'`, `'pdf'`, `'file'`). |
+| name | string | — | Nombre de archivo a mostrar (y a usar para inferir el tipo por extensión si no hay `mimeType`). Si no se pasa, se intenta extraer del final de la `url`. |
+| size | number | — | Tamaño en bytes, mostrado formateado (`KB`/`MB`/`GB`) en la tarjeta genérica de archivo. |
+| alt | string | nombre del archivo | Texto alternativo para imagen/video. |
+| poster | string | — | Poster del `<video>` (atributo nativo, también usado por el reproductor custom). |
+| controls | bool | `true` | Si es video, `true` usa el reproductor custom (`VideoPlayer`); `false` devuelve el `<video>` nativo del browser sin controles. Para audio sigue siendo el atributo `controls` nativo. |
+| autoPlay | bool | `false` | Autoplay nativo de `<video>`/`<audio>`. |
+| loop | bool | `false` | Loop nativo de `<video>`/`<audio>`. |
+| muted | bool | `false` | Mute nativo de `<video>`/`<audio>`. |
+| zoomable | bool | `true` | Si es imagen, permite hacer click para ampliarla a su tamaño natural manteniendo el contenedor en su alto normal (con scroll interno) — el componente no crece hacia afuera. Volver a hacer click la achica de nuevo. Cambia el cursor a `zoom-in`/`zoom-out`. |
+| actionLabel | string | — | Texto de un botón genérico de ancho completo debajo del marco (imagen/video/audio). No tiene acción propia — es puramente de presentación; qué hace se define con `onAction`. Solo se renderiza si `onAction` está definido. |
+| actionIcon | component | `Download` (lucide-react) | Ícono (componente, no elemento) que se muestra junto a `actionLabel` en el botón. Pasar `null` para que el botón se vea sin ícono. |
+| onAction | function | — | Callback del botón genérico. Si no se pasa, el botón no se renderiza (no es exclusivo de "descargar" — se usa para cualquier acción, ej. abrir un visor externo, compartir, etc., según lo que pase el consumidor). |
+| autoDetectType | bool | `true` | Si no se pudo inferir el tipo por `type`/`mimeType`/extensión, prueba la `url` contra un `<img>`/`<video>`/`<audio>` real (sin tocar el DOM visible) para determinar el tipo. Poner en `false` para evitar ese intento (ej. si ya se sabe que la URL no es un media reconocible, o para no generar carga innecesaria en listas largas). No se dispara si se pasó `type`/`mimeType` explícito. |
+| downloadable | bool | `true` | Muestra el botón de descarga en la tarjeta genérica de archivo (no aplica a imagen/video/audio/PDF). |
+| downloadLabel | string | `'Descargar'` | `aria-label`/`title` del botón de descarga. |
+| openLabel | string | `'Abrir'` | Texto del link "abrir en pestaña nueva" que acompaña al visor de PDF. |
+| bgColor | string | `'#f8fafc'` | Color de fondo del contenedor. |
+| borderColor | string | `'#e2e8f0'` | Color de borde del contenedor. |
+| textColor | string | `'#334155'` | Color de texto (nombre de archivo, metadata, nombre de audio). |
+| accentColor | string | `'#2563eb'` | Color del botón de descarga y del link "Abrir" del PDF. |
+| videoBgColor | string | `'#0d0f14'` | Color de fondo del reproductor de video custom (detrás del `<video>`, visible en los bordes si el aspect ratio no llena el contenedor). |
+| videoAccentColor | string | `'#7c9cff'` | Color de acento del reproductor de video custom: seek bar, slider de volumen y opción de velocidad activa. |
+| videoControlsColor | string | `'#f1f3f6'` | Color de los íconos/texto de los controles del reproductor de video custom (play, volumen, fullscreen, PiP, velocidad, buscador de tiempo) y del overlay de buffering. |
+| videoPip | bool | `true` | Muestra el botón de Picture-in-Picture en el reproductor de video custom (solo si el browser lo soporta). |
+| videoErrorLabel | string | `'No se pudo cargar el video'` | Texto del overlay de error del reproductor de video custom. |
+| videoRetryLabel | string | `'Reintentar'` | Texto del botón de reintento en el overlay de error del reproductor de video custom. |
+| videoLoadingVariant | string | `'bars'` | `variant` pasado al componente `Loading` del overlay de buffering del reproductor de video custom (`'default'`, `'bars'`, `'bounce'`, `'box'`). |
+| videoLoadingSize | string | `'medium'` | `size` pasado al componente `Loading` del overlay de buffering del reproductor de video custom. |
+| onError | function | — | Callback del evento `onError` nativo de `<img>`/`<video>`/`<audio>` (ej. para mostrar un fallback si la URL no carga). |
+| className | string | `''` | Clase adicional para el contenedor. |
+| style | object | — | Estilos inline adicionales para el contenedor. |
+
+**Ejemplos:**
+```jsx
+// Tipo forzado explícitamente (útil si la url no tiene extensión, ej. un endpoint de descarga)
+<MediaViewer url="/api/files/42/raw" type="image" name="foto-perfil" />
+
+// Imagen sin zoom al hacer click
+<MediaViewer url="/api/files/10/raw" name="banner.png" zoomable={false} />
+
+// Imagen con botón de acción debajo del marco (acción genérica, definida por el consumidor)
+import { Download } from 'lucide-react';
+
+<MediaViewer
+  url="/api/files/55/raw"
+  name="F1-Logo-black.jpeg"
+  actionLabel="Descargar"
+  actionIcon={Download}
+  onAction={() => downloadFile(fileId)}
+/>
+
+// Video con el reproductor custom repaletizado al branding del consumidor
+<MediaViewer
+  url="/api/files/77/raw"
+  name="presentacion.mp4"
+  poster="/api/files/77/poster"
+  videoBgColor="#1a0f2e"
+  videoAccentColor="#a855f7"
+  videoControlsColor="#f3e8ff"
+/>
+
+// Video sin PiP y con controles nativos del browser en vez del reproductor custom
+<MediaViewer url="/api/files/78/raw" name="clip.mp4" videoPip={false} />
+<MediaViewer url="/api/files/79/raw" name="fondo.mp4" controls={false} autoPlay loop muted />
+
+// Tarjeta de archivo genérico con colores personalizados
+<MediaViewer
+  url="/api/files/99/raw"
+  name="contrato.docx"
+  size={512000}
+  bgColor="#f5f3ff"
+  borderColor="#ddd6fe"
+  accentColor="#7c3aed"
+/>
+```
+
+**Notas:** No sube ni persiste nada — es puramente presentacional, recibe una URL ya resuelta. El PDF se muestra embebido en un `<iframe>` (sujeto a las políticas de same-origin/CSP del sitio que lo sirve) con un link "Abrir" como fallback — la story `PdfLocal` usa un PDF de prueba real servido desde `fixtures/MediaViewer/documento-de-prueba.pdf` (ver `.storybook/main.js`, `staticDirs: ["../fixtures"]`). `MediaViewer.KIND` expone las constantes de tipo (`MediaViewer.KIND.IMAGE`, etc.) para quien quiera forzar `type` sin hardcodear el string. El ícono cuadrado de la tarjeta genérica de archivo no tiene prop de color propia (su color viene del tipo de archivo detectado); usar `bgColor`/`borderColor`/`textColor`/`accentColor` para el resto del contenedor. El request de detección por `HEAD`/`GET` (ver `detectTypeByHead`) necesita que la `url` sea alcanzable por `fetch` desde el navegador con CORS permitido — si el servidor bloquea el origen, el intento falla silenciosamente y el componente se queda con el fallback por extensión/tarjeta genérica, sin romper el render.
+
+---
+
+### common/icons/fileType.js
+
+No es un componente — es el módulo compartido que mapea una extensión de archivo (`pdf`, `docx`, `xlsx`, `zip`, `md`, `mp3`, `png`, etc.) a `{ icon, bgColor, label }`, usado por [MediaViewer](#mediaviewer) y [FileListItem](#filelistitem) para no duplicar esa lógica. Los íconos son de `react-icons/bs` (set "file earmark"). Si se agrega soporte para una extensión nueva, se agrega en `FILE_TYPE_MAP` de este archivo y ambos componentes lo heredan automáticamente.
+
+**Import:**
+```jsx
+import { getFileTypeInfo, getExtension } from 'anteriority-ui/common/icons/fileType';
+```
+
+**API:**
+
+| Export | Tipo | Descripción |
+|---|---|---|
+| getFileTypeInfo(nameOrUrl) | function | Devuelve `{ icon: ComponentType, bgColor: string, label: string }` para la extensión detectada en `nameOrUrl`. Si no matchea ninguna extensión conocida, devuelve `DEFAULT_FILE_TYPE` (ícono genérico, gris, label `'Archivo'`). |
+| getExtension(value) | function | Extrae la extensión en minúsculas de un nombre de archivo o URL (ignora querystring/hash). Devuelve `''` si no hay extensión. |
+| FILE_TYPE_MAP | object | El mapa completo `extensión → { icon, bgColor, label }`, por si un consumidor necesita iterarlo o extenderlo localmente. |
+| DEFAULT_FILE_TYPE | object | El fallback usado cuando la extensión no matchea. |
+
+---
+
 ### InputWithIcon
 
 Campo de texto de Material-UI con un ícono (lucide-react) como adorno, con tres presentaciones distintas: `outlined`/`filled` (adorno dentro del campo), `standard` y `row` (ícono al costado, fuera del campo).
@@ -1783,6 +2103,14 @@ import MultilinePlaceholder from '../Material-UI/Components/MultilinePlaceholder
 | fullWidth | boolean | `true` | Si ocupa el 100% del ancho disponible. |
 | placeholder | string | — | Placeholder del campo. |
 | bgColor | string | `'#fff'` | Color de fondo del input. |
+| onImagePaste | function | — | Callback `(files, event)` invocado cuando se pegan (Ctrl+V) una o más imágenes desde el clipboard; `files` es un array de `File` nativos listos para subir o guardar en cualquier storage (si se pega una sola imagen, el array tiene un elemento). Una imagen ya pegada antes (mismo archivo, detectado por nombre+tamaño+fecha+tipo) se ignora para no duplicarla. Si no se pasa, el paste de imágenes no se intercepta (se comporta como un textarea normal). |
+| showImagePreview | boolean | `true` | Si se muestran miniaturas de las imágenes pegadas debajo del textarea, cada una con su propio botón para quitarla. Solo aplica si se pasó `onImagePaste`. |
+| imagePreviewLabel | string | `'Imagen pegada'` | Texto del badge (`Barnner`) de cada imagen pegada (y `alt` de la miniatura). |
+| imageRemoveLabel | string | `'Quitar imagen'` | `aria-label` del botón de quitar. |
+| imagePreviewBorderColor | string | `'#e2e8f0'` | Color de borde del chip contenedor del preview (miniatura + badge + botón de quitar). |
+| imageThumbBorderColor | string | `'#cbd5e1'` | Color de borde propio de la miniatura de la imagen (el `<img>`). |
+| imageLabelBgColor | string | `'#dbeafe'` | Color de fondo del badge del label (prop `bgColor` de `Barnner`). |
+| imageLabelTextColor | string | `'#1e40af'` | Color de texto del badge del label (prop `textColor` de `Barnner`). |
 | ...props | any | — | Cualquier otra prop de `TextField` de Material-UI. |
 
 **Ejemplos:**
@@ -1792,6 +2120,16 @@ import MultilinePlaceholder from '../Material-UI/Components/MultilinePlaceholder
 ```jsx
 <MultilinePlaceholder label="Comentarios" error="Este campo es obligatorio" rows={3} value={value} onChange={onChange} />
 ```
+```jsx
+<MultilinePlaceholder
+  label="Descripción"
+  value={value}
+  onChange={onChange}
+  onImagePaste={(files) => files.forEach(saveToStorage)}
+/>
+```
+
+**Notas sobre `onImagePaste`:** la extracción de los `File` se apoya en el hook compartido `usePasteImage` (`common/hooks/usePasteImage.js`), el mismo que usa el wrapper genérico `PasteImageField`. Si el clipboard trae varias imágenes a la vez, se extraen todas (ninguna se descarta en silencio); si una imagen ya fue pegada antes (mismo archivo), se ignora para no duplicarla. El preview debajo del textarea se renderiza con [ImagePastePreview](#imagepastepreview) — el mismo componente que usa `PasteImageField` — en vez de reimplementar el chip acá; todas las props `image*` de esta tabla se reenvían a ese componente. El componente sigue aceptando `onPaste` propio (se encadena, no se pisa).
 
 ---
 
@@ -2198,6 +2536,54 @@ import PasswordResetPanel from 'screens/components/PasswordResetPanel';
 
 ---
 
+### PasteImageField
+
+Wrapper genérico que agrega la capacidad de pegar (Ctrl+V) una o más imágenes desde el clipboard a **cualquier** campo de texto que se le pase como `children` (`MultilinePlaceholder`, `TextField`, un `<textarea>` plano, etc.), sin acoplar esa lógica a un componente de texto en particular. Si el clipboard pegado contiene al menos una imagen, se previene el paste normal (texto/base64) y se extraen todos los `File` nativos encontrados; si no, el campo recibe el paste normal sin cambios. Una imagen ya pegada antes (mismo archivo) se ignora para no duplicarla. La extracción/preview vive en el hook `usePasteImage` (`common/hooks/usePasteImage.js`), reutilizable también sin este wrapper.
+
+**Import:**
+```jsx
+import PasteImageField from 'anteriority-ui/screens/components/PasteImageField'; // export default, archivo index.jsx
+```
+
+**Uso básico:**
+```jsx
+<PasteImageField onImagePaste={(files) => files.forEach(saveToStorage)}>
+  <MultilinePlaceholder label="Descripción" value={value} onChange={onChange} />
+</PasteImageField>
+```
+
+**Props:**
+
+| Prop | Tipo | Default | Descripción |
+|---|---|---|---|
+| children | node | — | El campo de texto a envolver (debe aceptar/reenviar `onPaste`, como `MultilinePlaceholder`, `TextField` o un `<textarea>`/`<input>` nativo). |
+| onImagePaste | function | — | Callback `(files, event)` invocado cuando se pegan una o más imágenes; `files` es un array de `File` nativos listos para subir o guardar en cualquier storage (un elemento si se pegó una sola imagen). Una imagen ya pegada antes (mismo archivo, detectado por nombre+tamaño+fecha+tipo) se excluye del array. |
+| disabled | boolean | `false` | Si es `true`, ignora el paste de imágenes (el campo sigue aceptando paste de texto normal). |
+| showPreview | boolean | `true` | Si muestra una miniatura propia por cada imagen pegada, con botón para quitarla individualmente. |
+| previewLabel | string | `'Imagen pegada'` | Texto junto a cada miniatura (y `alt` de la imagen). |
+| removeLabel | string | `'Quitar imagen'` | `aria-label` del botón de quitar preview. |
+| borderColor | string | `'#e2e8f0'` | Color de borde del chip contenedor del preview (miniatura + label + botón de quitar). |
+| thumbBorderColor | string | `'#cbd5e1'` | Color de borde propio de la miniatura de la imagen (el `<img>`). |
+| labelBgColor | string | `'#dbeafe'` | Color de fondo del chip del label ("Imagen pegada"). |
+| labelTextColor | string | `'#1e40af'` | Color de texto del chip del label. |
+| ...props | any | — | Cualquier otra prop se pasa al `div` contenedor (`className`, `style`, etc.). |
+
+**Ejemplos:**
+```jsx
+<PasteImageField onImagePaste={(files) => setLastFiles(files)}>
+  <TextField label="Comentario" value={value} onChange={onChange} />
+</PasteImageField>
+```
+```jsx
+<PasteImageField showPreview={false} onImagePaste={(files) => files.forEach(uploadFile)}>
+  <MultilinePlaceholder label="Notas" rows={3} value={value} onChange={onChange} />
+</PasteImageField>
+```
+
+**Notas:** No sube ni persiste las imágenes por sí mismo — solo las extrae del clipboard y las entrega vía `onImagePaste` para que el consumidor decida qué hacer (subir a un backend, guardar en `localStorage`/IndexedDB, etc.). Si se pegan varias imágenes a la vez, se extraen todas (ninguna se descarta en silencio). El preview se renderiza con [ImagePastePreview](#imagepastepreview) — el mismo componente que usa `MultilinePlaceholder` — en vez de un chip reimplementado acá; todas las props de color/label de esta tabla se reenvían a ese componente. El hook subyacente `usePasteImage({ onImagePaste, disabled })` (`common/hooks/usePasteImage.js`) puede usarse directamente si se prefiere conectar `onPaste` a mano en vez de usar este wrapper.
+
+---
+
 ### PlaceholderButton
 
 Campo de configuración compuesto por un input (numérico, texto o multilínea) más un botón de guardado, con manejo de estado de carga, mensajes de éxito/error y validación.
@@ -2378,6 +2764,348 @@ import ScrollBar from 'screens/components/ScrollBar';
 
 ---
 
+### SchemaForm
+
+Renderiza un formulario completo a partir de un JSON Schema (+ `uiSchema` opcional), usando los widgets ya existentes de la librería (`Input`, `Checks`, `Swich`, `Selector`, `CalendarPicker`, `FormTextArea`) para cada tipo de campo, en vez de los inputs default de rjsf. Pensado para usarse como `children` de cualquier contenedor (ej. `DrawPanel`): el contenedor no sabe que adentro hay un `SchemaForm`, solo le llega el schema correspondiente a cada caso (login, alta de usuario, etc.).
+
+Es un wrapper de [`@rjsf/core`](https://rjsf-team.github.io/react-jsonschema-form/docs/) — requiere `@rjsf/core` como peer dependency (opcional: solo hace falta instalarlo si se usa este componente). El validador (`@rjsf/validator-ajv8`) ya viene empaquetado como dependency de `anteriority-ui` y se usa por default, así que no hace falta instalarlo ni pasarlo por prop; la prop `validator` queda disponible solo para quien quiera forzar otra versión/implementación.
+
+**Import:**
+```jsx
+import SchemaForm from '../SchemaForm'; // export default (index.jsx)
+```
+
+**Uso básico:**
+```jsx
+const schema = {
+  type: 'object',
+  required: ['email', 'password'],
+  properties: {
+    email: { type: 'string', title: 'Email', format: 'email' },
+    password: { type: 'string', title: 'Contraseña' },
+  },
+};
+
+<SchemaForm
+  schema={schema}
+  formData={formData}
+  onChange={setFormData}
+  onSubmit={(data) => login(data)}
+  submitText="Ingresar"
+/>
+```
+
+**Props:**
+
+| Prop | Tipo | Default | Descripción |
+|---|---|---|---|
+| `schema` | object | — | JSON Schema que describe los campos del formulario |
+| `uiSchema` | object | — | `uiSchema` de rjsf: qué widget usar por campo (`'ui:widget'`), opciones de cada uno (`'ui:options'`), orden, etc. |
+| `formData` | object | — | Valores actuales del formulario (controlado) |
+| `validator` | object | validador ajv8 incluido | Validador de rjsf; solo hace falta pasarlo para reemplazar el default empaquetado |
+| `widgets` | object | — | Widgets adicionales/override, mergeados sobre los widgets default de `SchemaForm` |
+| `fields` | object | — | `fields` custom de rjsf (para `ObjectField`/`ArrayField` a medida) |
+| `formId` | string | — | `id` del `<form>`; útil para disparar el submit desde un botón externo (ej. el footer de `DrawPanel`) |
+| `onChange` | function | — | `(formData, rjsfEvent) => void`, en cada cambio de cualquier campo |
+| `onSubmit` | function | — | `(formData, rjsfEvent) => void`, al enviar el formulario válido |
+| `onError` | function | — | Callback de errores de validación de rjsf |
+| `showSubmitButton` | boolean | `true` | Si no hay `children`, muestra un botón de submit (`Button` primario) |
+| `submitText` | string | `'Enviar'` | Texto del botón de submit default |
+| `disabled` | boolean | `false` | Deshabilita todos los campos |
+| `readonly` | boolean | `false` | Vuelve todos los campos de solo lectura |
+| `className` | string | `''` | Clase adicional en el `<form>` |
+| `style` | object | — | Estilos inline en el `<form>` |
+| `children` | node | — | Si se define, reemplaza el botón de submit default (ej. para poner acciones propias, o nada si los botones ya los provee un contenedor externo como `DrawPanel`) |
+
+**Widgets incluidos** (seleccionables desde `uiSchema` con `'ui:widget': '<Nombre>'`):
+
+| Widget | Usa | Tipo de campo típico |
+|---|---|---|
+| `TextWidget` | `Input` | `string` (default) |
+| `NumberWidget` | `Input` (`numeric`) | `number` / `integer` (default) |
+| `TextareaWidget` | `FormTextArea` | `string` largo (ej. `'ui:widget': 'TextareaWidget'`) |
+| `CheckboxWidget` | `Swich` | `boolean` (default — ver nota debajo) |
+| `SwitchWidget` | `Swich` | `boolean` como toggle, alias explícito de `CheckboxWidget` |
+| `ChecksWidget` | `Checks` | `boolean` con el look de checkbox tachable (ej. `'ui:widget': 'ChecksWidget'`) |
+| `CheckboxesWidget` | `Checks` (uno por opción) | `array` de `string` con `enum` + `uniqueItems` (selección múltiple; ej. `'ui:widget': 'CheckboxesWidget'` con `'ui:options': { enumOptions }`) |
+| `SelectWidget` | `Selector` | `string` con `enum` (default cuando hay `enum`; **no soporta selección múltiple**, usar `CheckboxesWidget` para eso) |
+| `RadioWidget` | `RadioGroup` + `Radio` (uno por opción) | `string` con `enum` + `'ui:widget': 'radio'` (alternativa a `SelectWidget` cuando conviene mostrar todas las opciones visibles en vez de un dropdown) |
+| `DateWidget` | `CalendarPicker` | `string` con `format: 'date'` (ej. `'ui:widget': 'DateWidget'`) |
+| `ColorWidget` | `ColorPicker` | `string` con `format: 'color'` (convención estándar de rjsf) |
+| `RangeWidget` | `Slider` | `number` / `integer` con `'ui:widget': 'range'`; usa `minimum`/`maximum`/`multipleOf` del schema como `min`/`max`/`step` |
+| `FileWidget` | botón de subida + `ImagePastePreview` | `string` con `format: 'data-url'` (archivo/imagen única), o `array` de esos con `format: 'data-url'` (múltiples, detectado automáticamente por rjsf) — ver nota de archivos debajo |
+| `EmailWidget` / `URLWidget` | `Input` (`type="email"`/`"url"`) | `string` con `format: 'email'` / `format: 'uri'` (rjsf los resuelve por `format` con prioridad sobre `TextWidget`, por eso necesitan su propio mapeo) |
+| `PasswordWidget` | `Input` (`type="password"`) | `string` con `'ui:widget': 'password'` (shorthand de rjsf) |
+
+**Nota sobre `boolean`:** `Checks` tacha el label al marcarlo (pensado para listas de permisos/to-do), lo cual se ve mal en un campo booleano suelto de formulario. Por eso el widget registrado como `CheckboxWidget` (el que rjsf usa por default para todo `boolean`) es en realidad un `Swich`; para el look de checkbox clásico hay que pedirlo explícito con `'ui:widget': 'ChecksWidget'`.
+
+**Nota sobre archivos (`FileWidget`):** el valor que entrega `onChange` es un data-URL en base64 (string), o un array de data-URLs si el campo es `array`/`'ui:options': { multiple: true }` — no un `File` nativo del browser. Restringir el tipo de archivo con `'ui:options': { accept: 'image/*' }` (mismo formato que el atributo HTML `accept`). El preview reusa `ImagePastePreview` (el mismo chip que usan `PasteImageField`/`MultilinePlaceholder`).
+
+**Schema de referencia completo:** este `schema` + `uiSchema` ejercitan todos los tipos/formatos que `SchemaForm` sabe interpretar — útil como plantilla para armar uno propio o para ver de un vistazo qué forma de JSON Schema produce cada widget.
+
+```js
+const schema = {
+  type: 'object',
+  required: ['nombre', 'email'],
+  properties: {
+    nombre: {
+      type: 'string',
+      title: 'Nombre',
+      minLength: 2,
+      maxLength: 50,
+      description: 'Texto corto → TextWidget (Input)',
+    },
+    bio: {
+      type: 'string',
+      title: 'Biografía',
+      description: 'Texto largo → TextareaWidget si se pide en uiSchema (FormTextArea)',
+    },
+    edad: {
+      type: 'integer',
+      title: 'Edad',
+      minimum: 18,
+      maximum: 99,
+      description: 'number/integer → NumberWidget (Input numeric)',
+    },
+    email: {
+      type: 'string',
+      format: 'email',
+      title: 'Email',
+      description: "format: 'email' → EmailWidget (Input type=email)",
+    },
+    password: {
+      type: 'string',
+      title: 'Contraseña',
+      description: "ui:widget: 'password' → PasswordWidget (Input type=password)",
+    },
+    sitioWeb: {
+      type: 'string',
+      format: 'uri',
+      title: 'Sitio web',
+      description: "format: 'uri' → URLWidget (Input type=url)",
+    },
+    activo: {
+      type: 'boolean',
+      title: 'Cuenta activa',
+      default: true,
+      description: 'boolean (default) → CheckboxWidget, que en SchemaForm es un Swich',
+    },
+    recibirNotificaciones: {
+      type: 'boolean',
+      title: 'Recibir notificaciones',
+      description: "boolean + ui:widget: 'ChecksWidget' → look de checkbox clásico (Checks)",
+    },
+    pais: {
+      type: 'string',
+      title: 'País',
+      enum: ['ar', 'uy', 'br'],
+      description: 'string + enum → SelectWidget (Selector, single-select)',
+    },
+    plan: {
+      type: 'string',
+      title: 'Plan',
+      enum: ['free', 'pro', 'enterprise'],
+      description: "string + enum + ui:widget: 'radio' → RadioWidget (RadioGroup + Radio)",
+    },
+    roles: {
+      type: 'array',
+      title: 'Roles',
+      items: { type: 'string', enum: ['admin', 'editor', 'viewer'] },
+      minItems: 1,
+      uniqueItems: true,
+      description: "array de enum + ui:widget: 'CheckboxesWidget' → selección múltiple (Checks)",
+    },
+    nacimiento: {
+      type: 'string',
+      format: 'date',
+      title: 'Fecha de nacimiento',
+      description: "format: 'date' + ui:widget: 'DateWidget' → CalendarPicker",
+    },
+    avatar: {
+      type: 'string',
+      format: 'data-url',
+      title: 'Foto de perfil',
+      description: "format: 'data-url' → FileWidget, un solo archivo (data-URL en base64)",
+    },
+    adjuntos: {
+      type: 'array',
+      title: 'Archivos adjuntos',
+      items: { type: 'string', format: 'data-url' },
+      description: "array de format: 'data-url' → FileWidget con multiple=true (detectado solo por rjsf)",
+    },
+    colorFavorito: {
+      type: 'string',
+      format: 'color',
+      title: 'Color favorito',
+      default: '#2563eb',
+      description: "format: 'color' → ColorWidget (ColorPicker)",
+    },
+    satisfaccion: {
+      type: 'integer',
+      title: 'Satisfacción',
+      minimum: 0,
+      maximum: 10,
+      default: 5,
+      description: "number/integer + ui:widget: 'range' → RangeWidget (Slider), min/max desde minimum/maximum",
+    },
+    direccion: {
+      type: 'object',
+      title: 'Dirección',
+      properties: {
+        calle: { type: 'string', title: 'Calle' },
+        ciudad: { type: 'string', title: 'Ciudad' },
+        codigoPostal: {
+          type: 'string',
+          title: 'Código postal',
+          pattern: '^[0-9]{4,6}$',
+        },
+      },
+      required: ['calle', 'ciudad'],
+      description: 'object anidado → ObjectFieldTemplate, recursivo (cada property usa su propio widget)',
+    },
+  },
+};
+
+const uiSchema = {
+  bio: { 'ui:widget': 'TextareaWidget' },
+  password: { 'ui:widget': 'password' },
+  recibirNotificaciones: { 'ui:widget': 'ChecksWidget' },
+  roles: {
+    'ui:widget': 'CheckboxesWidget',
+    'ui:options': {
+      enumOptions: [
+        { value: 'admin', label: 'Admin' },
+        { value: 'editor', label: 'Editor' },
+        { value: 'viewer', label: 'Viewer' },
+      ],
+    },
+  },
+  plan: { 'ui:widget': 'radio' },
+  nacimiento: { 'ui:widget': 'DateWidget' },
+  avatar: { 'ui:options': { accept: 'image/*' } },
+  adjuntos: { 'ui:options': { multiple: true } },
+  satisfaccion: { 'ui:widget': 'range' },
+};
+
+<SchemaForm schema={schema} uiSchema={uiSchema} formData={formData} onChange={setFormData} onSubmit={handleSave} />
+```
+
+**Ejemplos:**
+```jsx
+// Formulario de perfil con textarea, select y fecha, dentro de un DrawPanel
+const schema = {
+  type: 'object',
+  required: ['nombre'],
+  properties: {
+    nombre: { type: 'string', title: 'Nombre' },
+    bio: { type: 'string', title: 'Biografía' },
+    pais: { type: 'string', title: 'País', enum: ['ar', 'uy', 'br'] },
+    nacimiento: { type: 'string', title: 'Fecha de nacimiento', format: 'date' },
+  },
+};
+
+const uiSchema = {
+  bio: { 'ui:widget': 'TextareaWidget' },
+  pais: {
+    'ui:options': {
+      enumOptions: [
+        { value: 'ar', label: 'Argentina' },
+        { value: 'uy', label: 'Uruguay' },
+        { value: 'br', label: 'Brasil' },
+      ],
+    },
+  },
+};
+
+<DrawPanel isOpen={open} onClose={handleClose} title="Editar perfil" showActions formId="profile-form" onConfirm={() => {}}>
+  <SchemaForm
+    formId="profile-form"
+    schema={schema}
+    uiSchema={uiSchema}
+    formData={formData}
+    onChange={setFormData}
+    onSubmit={handleSave}
+    showSubmitButton={false}
+  />
+</DrawPanel>
+```
+
+**Notas:** El validador (`@rjsf/validator-ajv8`) viene empaquetado como dependency de `anteriority-ui` y se usa por default — no hace falta instalarlo ni pasarlo por prop; `validator` solo sirve para forzar otra implementación. Los widgets propios pueden extenderse o pisarse por campo vía la prop `widgets` (se mergean sobre los default) sin perder el resto. Al igual que el resto de componentes con `children` libre, no se acopla a `DrawPanel` ni a ningún contenedor — cualquier componente puede envolverlo. `templates.ButtonTemplates.SubmitButton` está pisado con un componente que no renderiza nada: `@rjsf/core` agrega su propio botón de submit nativo (sin estilo) además de cualquier `children`/botón que se le pase al `<Form>`, así que sin ese override quedarían dos submits — el de `SchemaForm` y el default de rjsf.
+
+---
+
+### RenderJsonSchema
+
+Vista de **solo lectura** de datos ya guardados a partir de un JSON Schema: a diferencia de `SchemaForm`, no renderiza un formulario editable ni depende de rjsf — recorre `schema.properties` y muestra cada valor de `formData` como texto (o imagen, para `format: 'data-url'`), resolviendo el `title`, `enum`/`enumNames` (o `anyOf` con `const`/`title`), `boolean` y `format: 'date'`/`'date-time'` del propio schema. Pensado para mostrar el detalle de una respuesta ya enviada (ej. lo que guardó un `<SchemaForm />`) sin tener que escribir a mano el mapeo de cada campo.
+
+Tolera datos guardados por un widget roto o una versión vieja (un valor que no matchea el `type` esperado, como un objeto en vez de un string): en lugar de romper o mostrar `"[object Object]"`, ese campo se muestra vacío (`"Sin datos"` por default).
+
+**Import:**
+```jsx
+import RenderJsonSchema from '../RenderJsonSchema'; // export default (index.jsx)
+```
+
+**Uso básico:**
+```jsx
+const schema = {
+  type: 'object',
+  properties: {
+    nombre: { type: 'string', title: 'Nombre' },
+    pais: { type: 'string', title: 'País', enum: ['ar', 'uy'], enumNames: ['Argentina', 'Uruguay'] },
+    nacimiento: { type: 'string', title: 'Fecha de nacimiento', format: 'date' },
+  },
+};
+
+<RenderJsonSchema schema={schema} formData={{ nombre: 'Ignacio', pais: 'ar', nacimiento: '1996-05-10' }} />
+```
+
+**Props:**
+
+| Prop | Tipo | Default | Descripción |
+|---|---|---|---|
+| `schema` | object | — | Mismo JSON Schema (`properties`, `title`, `enum`/`enumNames`, `anyOf`, `format`) que se le pasaría a `SchemaForm` |
+| `formData` | object | — | Datos ya guardados a mostrar; si falta una key o el schema no tiene `properties`, se muestra `emptyText` |
+| `emptyText` | string | `'Sin datos'` | Texto para un campo sin valor, o un valor que no matchea el tipo esperado por el schema |
+| `bordered` | boolean | `true` | Si `true`, envuelve las filas en un panel con fondo/borde propio (look de card). Un `object` anidado se renderiza internamente con `bordered={false}` para no anidar panel dentro de panel |
+| `bgColor` | string | — | Color de fondo del panel (solo visible si `bordered`) |
+| `textColor` | string | — | Color del texto de los valores |
+| `labelColor` | string | — | Color de los labels (nombre de cada campo) |
+| `borderColor` | string | — | Color del borde del panel y de la línea divisoria entre filas |
+| `className` | string | `''` | Clase adicional en el contenedor raíz |
+| `style` | object | — | Estilos inline en el contenedor raíz |
+
+**Ejemplos:**
+```jsx
+// object anidado → recursión (mismo componente, con indentación); array de enum → labels unidos por coma
+const schema = {
+  type: 'object',
+  properties: {
+    roles: {
+      type: 'array',
+      title: 'Roles',
+      items: { type: 'string', enum: ['admin', 'editor'], enumNames: ['Admin', 'Editor'] },
+    },
+    direccion: {
+      type: 'object',
+      title: 'Dirección',
+      properties: {
+        calle: { type: 'string', title: 'Calle' },
+        ciudad: { type: 'string', title: 'Ciudad' },
+      },
+    },
+  },
+};
+
+<RenderJsonSchema
+  schema={schema}
+  formData={{ roles: ['admin', 'editor'], direccion: { calle: 'Av. Siempre Viva 742', ciudad: 'Springfield' } }}
+/>
+```
+
+**Notas:** No usa ningún widget de `SchemaForm` ni acepta `uiSchema` — el mapeo de presentación (enum→label, boolean→Sí/No, fecha formateada `dd/MM/yyyy` con `date-fns`) está fijo y se resuelve solo con lo que ya describe el `schema`. Layout en una sola columna: cada campo es una fila (label en mayúsculas chico arriba, valor grande abajo) separada de la siguiente por una línea divisoria, todo dentro de un único panel — así es naturalmente responsive, sin media queries. Un `object` anidado recorre el mismo componente dentro de la fila del campo padre (sin repetir panel/borde), heredando los mismos props de color. Para `format: 'data-url'` (archivo/imagen, single o array) cada valor se renderiza con `MediaViewer` (detecta imagen/video/audio/PDF/archivo genérico solo), no con un `<img>` a mano; `bgColor`/`textColor`/`borderColor` se propagan también a ese `MediaViewer` interno (usa sus propios tokens CSS, no los hereda solo). Los colores son light por default (como el resto de la librería); para un panel oscuro (ej. para integrarlo en un contenedor con tema oscuro) usar `bgColor`/`textColor`/`labelColor`/`borderColor` en vez de CSS global, siguiendo la convención de props de color del resto de componentes — ver [Convención: props de color](#convención-props-de-color) en CLAUDE.md.
+
+---
+
 ### Sidebar
 
 Barra lateral de navegación colapsable con grupos de items, subitems anidados y colapsables (ej. "Vacunas" → Ver/Crear/Pendientes/Lotes), badges por método HTTP, menú de usuario, menú contextual por item (editar/eliminar/fijar/colaboradores) y reordenamiento por drag & drop.
@@ -2476,6 +3204,8 @@ import Sidebar from 'screens/components/Sidebar/index';
 ```
 
 **Notas:** Persiste el estado colapsado en `localStorage` bajo la clave `sidebar_collapsed`. Los subitems no soportan drag & drop (`onReorderItems`), menú contextual (`onItemEdit`/`onItemDelete`/`onItemPin`/`onItemCollaborators`) ni colapsado individual persistido — solo navegación simple vía `onSelect`. Cuando el sidebar está colapsado (`isCollapsed`), los grupos con `subItems` se muestran colapsados y sin chevron (igual que cualquier item simple, con tooltip); hay que expandir el sidebar para ver/navegar los subitems. `onSearch`/`filterMenuGroups` matchea por `label` del item padre o de cualquiera de sus `subItems`, pero si matchea, se muestra el item completo con **todos** sus subitems (no solo el que matcheó).
+
+**Responsive (mobile):** por debajo de 767px de viewport, el sidebar se comporta como un drawer: queda oculto fuera de pantalla y aparece un botón flotante con ícono de hamburguesa (esquina superior izquierda) para abrirlo. Al abrirse, se desliza como overlay a ancho completo (280px, hasta 85vw) sobre un backdrop oscuro; se cierra al tocar el backdrop, al presionar Escape, al tocar la X del propio drawer, o automáticamente al seleccionar un item (`onSelect`). El botón de colapsar (`collapsible`) se oculta en este modo, ya que no aplica a un drawer full-width. No requiere ninguna prop nueva — la detección de mobile es automática vía `matchMedia`.
 
 ---
 
@@ -2701,6 +3431,7 @@ import TableA from 'screens/components/TableA';
 | `stickyFirstColumn` | `boolean` | `false` | Deja la primera columna fija a la izquierda mientras la tabla se desplaza en horizontal. Su celda necesita fondo opaco: por defecto usa `surfaceColor`; si pintás las filas con un tinte (`rowClassName`), el fondo de `td:first-child` debe seguir siendo opaco (ej. el tinte como `linear-gradient` sobre el color de superficie). |
 | `stickyHeader` | `boolean` | `false` | Encabezado siempre visible: la tabla pasa a scrollear en vertical por dentro (hasta `maxHeight`, sin barra vertical visible) y el `<th>` queda pegado arriba con `position: sticky`. Combina bien con `scrollFooter`, que queda siempre a la vista bajo la tabla. |
 | `maxHeight` | `string` \| `number` | `'70vh'` | Alto máximo del área de la tabla cuando `stickyHeader` está activo. |
+| `width` | `string` \| `number` | — | Ancho total de la tabla (`<table>`), ej. `'480px'` o `600`. Sin esta prop la tabla sigue ocupando el 100% del contenedor, igual que antes — es para el caso contrario, cuando se quiere que la tabla NO se estire a todo el ancho disponible. No afecta el ancho del contenedor/wrapper, que sigue siendo 100%. |
 | `scrollFooter` | `boolean` | `false` | Muestra un pie pegado al borde inferior de la pantalla (`position: sticky`) con un botón ◀, un slider y un botón ▶ para desplazar la tabla en horizontal sin bajar hasta su final. Solo aparece si la tabla es más ancha que su contenedor y reemplaza la barra de scroll horizontal propia de la tabla. Ningún ancestro de la tabla debe tener `overflow: hidden/auto` entre ella y el scroll de la página (usar `overflow: clip` si hace falta recortar). |
 | `scrollFooterBgColor` | `string` | `surfaceColor` | Fondo del pie de desplazamiento. |
 | `scrollFooterBorderColor` | `string` | `borderColor` | Borde del pie de desplazamiento. |
@@ -2770,9 +3501,12 @@ function UsersTable() {
 
   return <TableA columns={columns} data={filteredData} keyExtractor={(row) => row.id} />;
 }
+
+// Ancho total fijo en vez de ocupar todo el contenedor
+<TableA columns={columns} data={data} keyExtractor={(row) => row.id} width="480px" />
 ```
 
-> **Importante:** `TableA` usa columnas con forma `{ header, accessor, align, width, render, filter }` y filas como objetos planos accedidos por `accessor`. Ver `TableB` abajo — su forma es distinta, no son intercambiables.
+> **Importante:** `TableA` usa columnas con forma `{ header, accessor, align, width, render, filter }` y filas como objetos planos accedidos por `accessor`. Ver `TableB` abajo — su forma es distinta, no son intercambiables. No confundir `width` a nivel tabla (prop de arriba) con `width` a nivel columna (`col.width`, dentro de `columns`) — son dos cosas distintas.
 
 ---
 
@@ -2819,6 +3553,7 @@ import TableB from 'screens/components/TableB';
 | `stickyFirstColumn` | `boolean` | `false` | Deja la primera columna fija a la izquierda al desplazar en horizontal. Su celda usa `surfaceColor` como fondo opaco (si pintás las filas con un tinte, el fondo de `td:first-child` debe seguir siendo opaco). Las celdas con colSpan (vacío, error, fila expandida) no se fijan. |
 | `stickyHeader` | `boolean` | `false` | Encabezado siempre visible: la tabla pasa a scrollear en vertical por dentro (hasta `maxHeight`, sin barra vertical visible) y el `<th>` queda pegado arriba con `position: sticky`. Combina bien con `scrollFooter`, que queda siempre a la vista bajo la tabla. |
 | `maxHeight` | `string` \| `number` | `'70vh'` | Alto máximo del área de la tabla cuando `stickyHeader` está activo. |
+| `width` | `string` \| `number` | — | Ancho total de la tabla (`<table>`), ej. `'480px'` o `600`. Sin esta prop la tabla sigue ocupando el 100% del contenedor, igual que antes — es para el caso contrario, cuando se quiere que la tabla NO se estire a todo el ancho disponible. No afecta el ancho del contenedor/wrapper, que sigue siendo 100%. No confundir con `col.width` (ancho de una columna puntual, dentro de `columns`). |
 | `scrollFooter` | `boolean` | `false` | Pie `position: sticky` al borde inferior de la pantalla con ◀, slider y ▶ para desplazar la tabla sin bajar hasta su final. Solo aparece si la tabla es más ancha que su contenedor y reemplaza la barra horizontal propia. Ningún ancestro entre la tabla y el scroll de la página debe tener `overflow: hidden/auto` (usar `overflow: clip`). |
 | `scrollFooterBgColor`, `scrollFooterBorderColor` | `string` | `surfaceColor`, `borderColor` | Fondo y borde del pie. |
 | `scrollControlsColor` | `string` | `'#7c9cff'` (slider) / color por defecto de `Button` | Color de los botones ◀ ▶ y del slider. |
@@ -2931,6 +3666,41 @@ const [enabled, setEnabled] = useState(false);
 
 ---
 
+### Text
+
+Bloque de texto genérico (título o párrafo) para usar dentro de layouts como `Container` o `Frame` cuando se necesita meter texto suelto sin armar un componente nuevo. La `variant` define tanto el tag HTML semántico (`h1`/`h2`/`h3`/`p`/`span`) como su tamaño de fuente por defecto.
+
+**Import:**
+```jsx
+import Text from '../Text'; // export default (index.jsx)
+```
+
+**Uso básico:**
+```jsx
+<Text variant="h2">Título de la sección</Text>
+<Text>Texto de párrafo normal.</Text>
+```
+
+**Props:**
+
+| Prop | Tipo | Default | Descripción |
+|---|---|---|---|
+| `children` | node | — | Contenido del texto |
+| `variant` | `'h1' \| 'h2' \| 'h3' \| 'body' \| 'caption'` | `'body'` | Define el tag HTML (`h1`/`h2`/`h3`/`p`/`span`) y el tamaño/peso de fuente |
+| `color` | string | — | Color del texto (`--text-color`) |
+| `align` | `'left' \| 'center' \| 'right'` | `'left'` | Alineación del texto (`text-align`) |
+| `className` | string | `''` | Clase CSS adicional |
+| `style` | object | — | Estilos inline adicionales, mergeados con los internos |
+
+**Ejemplos:**
+```jsx
+<Text variant="h1">Título principal</Text>
+<Text variant="h3" color="#2563eb" align="center">Subtítulo centrado</Text>
+<Text variant="caption">Nota aclaratoria</Text>
+```
+
+---
+
 ### ToggleCard
 
 Tarjeta informativa/aviso con icono, título y descripción (con soporte de texto resaltado tipo `**negrita**`), acción custom y botón de cierre opcional.
@@ -3033,6 +3803,12 @@ import TopBar from '../TopBar/index'; // export default
 | `loading` | boolean | `false` | Activa el estado de carga utilizando el componente `Skeleton` para logo, breadcrumbs/título, buscador y acciones, conservando la estructura y layout sin saltos visuales. |
 | `isLoading` | boolean | `false` | Alias de conveniencia para `loading`. |
 | `skeletonActionsCount` | number | `3` (o `actions.length`) | Cantidad de botones de acción a mostrar como skeleton durante el estado de carga. |
+| `actionHover` | boolean | `true` | Controla si los botones de acción tienen efecto hover. Pasar `false` para quitar/desactivar el hover por completo. |
+| `actionHoverBgColor` | string | `'#e2e8f0'` | Color de fondo en hover para los botones de acción (`--topbar-action-hover-bg`). |
+| `actionHoverTextColor` | string | `'#0f172a'` | Color de texto/icono en hover para los botones de acción (`--topbar-action-hover-text`). |
+| `actionHoverBorderColor` | string | `'#e2e8f0'` | Color del borde en hover para los botones de acción (`--topbar-action-hover-border`). |
+| `actionRippleColor` | string | `'rgba(15, 23, 42, 0.28)'` | Color de la animación de onda (ripple/olas) al hacer click en los botones de acción (`--topbar-action-ripple`). |
+
 
 
 **Ejemplos:**
@@ -3057,7 +3833,9 @@ import TopBar from '../TopBar/index'; // export default
 />
 ```
 
-**Notas:** El menú de usuario se renderiza vía `createPortal` a `document.body` (mismo patrón que el menú de usuario de `Sidebar`), posicionado contra el botón del avatar. `actions` son completamente genéricas — no asume ningún set fijo de íconos (notificaciones, mensajes, ayuda, etc. quedan a elección del consumidor).
+**Notas:** El menú de usuario se renderiza vía `createPortal` a `document.body` (mismo patrón que el menú de usuario de `Sidebar`), posicionado contra el botón del avatar. `actions` son completamente genéricas — no asume ningún set fijo de íconos (notificaciones, mensajes, ayuda, etc. quedan a elección del consumidor). El atajo de teclado Ctrl/Cmd+K para abrir el `CommandPalette` (`useCommandPaletteShortcut` en `utils.js`) usa el hook genérico `useKeyboardShortcut` (`common/hooks/useKeyboardShortcut.js`), reutilizable para registrar cualquier otro atajo global (`{ key, ctrlOrMeta, shift, alt, enabled, onTrigger }`) sin reimplementar el listener de teclado a mano en cada componente nuevo.
+
+**Responsive:** `leftSection` (logo + breadcrumb/título) se encoge primero y trunca con ellipsis; `rightSection` (acciones + divisor + avatar + `ctaButton`) nunca se encoge, para que los botones nunca queden apretados ni se superpongan entre sí. Por debajo de 1023px el buscador central se angosta, por debajo de 767px se oculta por completo (el consumidor puede ofrecer una lupa en `actions` para ese breakpoint) y el header pasa a `flex-wrap` como red de seguridad si aun así no entra todo en una fila; por debajo de 479px se reducen aún más los paddings de los botones de acción y el ancho máximo de breadcrumb/título.
 
 ---
 
@@ -3100,3 +3878,71 @@ import UserEditPopover from 'screens/components/UserEditPopover';
 ```
 
 **Notas:** Al guardar, llama a `updateUserName` de `features/user-profile/api.js` y a `getUserId` de `common/storage/LocalStorage.js`. Para que la petición real funcione en una app consumidora es necesario tener configurado `configureApiClient` (`common/api/client.js`); si la llamada falla, el componente igual invoca `onSuccess` con el nombre local como fallback para pruebas.
+
+---
+
+### NotificationsPanel
+
+Panel de notificaciones y mensajes con soporte para scroll interno, descartado de ítems, acciones por ítem, estados de carga (Skeleton y Spinner) y un estado vacío (*empty state*) espacioso y personalizable. Si el título o el mensaje hacen referencia a mensajes/correo, detecta el contexto automáticamente y muestra los íconos de sobre correspondientes.
+
+**Import:**
+```jsx
+import NotificationsPanel from 'screens/components/NotificationsPanel';
+// o desde el barrel:
+import { NotificationsPanel } from 'anteriority-ui';
+```
+
+**Uso básico (con notificaciones):**
+```jsx
+<NotificationsPanel
+  title="Notificaciones"
+  notifications={[
+    {
+      id: 1,
+      title: 'Nueva cita agendada',
+      message: 'Se agendó una cita para mañana a las 15:00.',
+      timestamp: 'Hace 5 minutos',
+    },
+  ]}
+  onDismiss={(id) => handleDismiss(id)}
+/>
+```
+
+**Uso estado vacío (Mensajes / Screenshot):**
+```jsx
+<NotificationsPanel
+  title="Mensajes"
+  emptyMessage="No tienes mensajes."
+  notifications={[]}
+/>
+```
+
+**Props:**
+
+| Prop | Tipo | Default | Descripción |
+|---|---|---|---|
+| `title` | `string` | `'Notificaciones'` | Título del panel. Si contiene palabras como "mensaje", "mail" o "chat", adapta los íconos por defecto a correo. |
+| `icon` | `ReactNode` | `<Bell size={20} />` \| `<Mail size={20} />` | Ícono del encabezado. Si no se pasa, se deduce según el contexto del título. |
+| `notifications` | `Array<NotificationItem>` | `[]` | Lista de notificaciones a mostrar. Si está vacía, muestra el contenedor de estado vacío. |
+| `onDismiss` | `function(id)` | — | Callback invocado cuando el usuario descarta una notificación. |
+| `emptyTitle` | `string` | — | Título opcional para el estado vacío (ej. `"Bandeja limpia"`). |
+| `emptyMessage` | `string` | `'No tenés notificaciones nuevas.'` | Mensaje descriptivo del estado vacío. |
+| `emptyIcon` | `ReactNode \| ReactComponent \| boolean` | Auto (`MailX` o `BellOff`) | Ícono central del estado vacío. Pasar `false` para ocultarlo. |
+| `emptyIconSize` | `number` | `46` | Tamaño en píxeles del ícono del estado vacío. |
+| `emptyIconColor` | `string` | `'#94a3b8'` | Color del ícono del estado vacío. |[]()
+| `emptyTextColor` | `string` | `'#64748b'` | Color del texto del estado vacío. |
+| `emptyMinHeight` | `number \| string` | `200` | Altura mínima del contenedor de estado vacío en píxeles. |
+| `maxHeight` | `number \| string` | `380` | Altura máxima del contenido con scroll interno. |
+| `dismissLabel` | `string` | `'Quitar notificación'` | Tooltip/aria-label para el botón de descartar. |
+| `isModal` | `boolean` | `false` | Renderiza el panel dentro de un modal. |
+| `onClose` | `function` | — | Callback al cerrar el panel cuando se usa en modo modal. |
+| `isLoading` | `boolean` | `false` | Muestra estado de carga. |
+| `loadingType` | `'skeleton' \| 'spinner'` | `'skeleton'` | Tipo de indicador de carga. |
+| `loadingVariant` | `string` | — | Variante del spinner (`'bars'`, `'dots'`, etc.). |
+| `skeletonCount` | `number` | `3` | Cantidad de skeletons a renderizar. |
+| `bgColor` | `string` | — | Color de fondo del panel (`--frame-bg`). |
+| `iconColor` | `string` | — | Color del ícono del encabezado (`--frame-icon-color`). |
+| `itemBgColor` | `string` | — | Fondo por defecto de las tarjetas de notificación. |
+| `itemBorderColor` | `string` | — | Borde por defecto de las tarjetas de notificación. |
+| `itemIconColor` | `string` | — | Color del ícono por defecto de las tarjetas. |
+| `textColor` | `string` | — | Color de texto principal. |

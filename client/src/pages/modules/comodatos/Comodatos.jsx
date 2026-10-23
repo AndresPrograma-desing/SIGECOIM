@@ -2,13 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, CalendarPicker, MultilinePlaceholder } from 'anteriority-ui';
 import FormMessage from '../../../components/FormMessage';
-import { Plus } from 'lucide-react';
+import { Plus, Filter, FileDown } from 'lucide-react';
 import { getComodatos, createComodato, updateComodato, deleteComodato, registrarDevolucion } from '../../../services/comodatos';
 import { getEstudiantes } from '../../../services/estudiantes';
 import { getInstrumentos } from '../../../services/instrumentos';
 import { esMenorDeEdad } from '../../../utils/edad';
 import { tableColors } from '../../../theme/tokens';
 import { COMMON, COMODATOS as TXT, INSTRUMENTOS } from '../../../constants/text';
+import { generarReporteComodatosPDF } from '../../../utils/pdf/reporteComodatos';
+import { generarContratoPDF } from '../../../utils/pdf/contratoComodato';
 
 const FORM_INICIAL = {
   folio_contrato: '',
@@ -16,6 +18,16 @@ const FORM_INICIAL = {
   fecha_devolucion_prevista: '',
   estudiante_id: '',
   instrumento_id: '',
+  condicion_inicial: '',
+  observaciones_iniciales: '',
+};
+
+const FILTROS_INICIAL = {
+  estudiante_id: '',
+  instrumento_id: '',
+  desde: '',
+  hasta: '',
+  estado: '',
 };
 
 function badgeTypeEstado(row) {
@@ -47,12 +59,18 @@ export default function Comodatos() {
   const [devolucionError, setDevolucionError] = useState('');
   const [devolviendo, setDevolviendo] = useState(false);
 
-  const cargar = async () => {
+  const [filtrosOpen, setFiltrosOpen] = useState(false);
+  const [filtros, setFiltros] = useState(FILTROS_INICIAL);
+  const [filtrosAplicados, setFiltrosAplicados] = useState(FILTROS_INICIAL);
+  const [pdfError, setPdfError] = useState('');
+
+  const cargar = async (filtrosActivos = filtrosAplicados) => {
     setLoading(true);
     setError(null);
     try {
+      const queryParams = Object.fromEntries(Object.entries(filtrosActivos).filter(([, v]) => v));
       const [comodatosData, estudiantesData, instrumentosData] = await Promise.all([
-        getComodatos(),
+        getComodatos(Object.keys(queryParams).length ? queryParams : undefined),
         getEstudiantes(),
         getInstrumentos(),
       ]);
@@ -74,6 +92,7 @@ export default function Comodatos() {
 
   const opcionesEstudiantes = estudiantes.map((e) => ({ value: e.id, label: `${e.nombre} ${e.apellido}` }));
   const opcionesInstrumentos = instrumentos
+    .filter((i) => i.estado_conservacion !== 'MALO')
     .filter((i) => i.estado_disponibilidad === 'DISPONIBLE' || i.id === editando?.instrumento_id)
     .map((i) => ({ value: i.id, label: `${i.nombre} (${i.codigo_inventario})` }));
 
@@ -92,6 +111,8 @@ export default function Comodatos() {
       fecha_devolucion_prevista: comodato.fecha_devolucion_prevista || '',
       estudiante_id: comodato.estudiante_id || '',
       instrumento_id: comodato.instrumento_id || '',
+      condicion_inicial: comodato.condicion_inicial || '',
+      observaciones_iniciales: comodato.observaciones_iniciales || '',
     });
     setFormError('');
     setPanelOpen(true);
@@ -100,6 +121,53 @@ export default function Comodatos() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleInstrumentoChange = (e) => {
+    const instrumento_id = e.target.value;
+    const instrumento = instrumentos.find((i) => String(i.id) === String(instrumento_id));
+    setFormData((prev) => ({
+      ...prev,
+      instrumento_id,
+      condicion_inicial: prev.condicion_inicial || instrumento?.estado_conservacion || '',
+    }));
+  };
+
+  const handleFiltroChange = (e) => {
+    const { name, value } = e.target;
+    setFiltros((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const aplicarFiltros = async (e) => {
+    e.preventDefault();
+    setFiltrosAplicados(filtros);
+    setFiltrosOpen(false);
+    await cargar(filtros);
+  };
+
+  const limpiarFiltros = async () => {
+    setFiltros(FILTROS_INICIAL);
+    setFiltrosAplicados(FILTROS_INICIAL);
+    setFiltrosOpen(false);
+    await cargar(FILTROS_INICIAL);
+  };
+
+  const exportarPdf = () => {
+    setPdfError('');
+    try {
+      generarReporteComodatosPDF(dataFiltrada);
+    } catch (err) {
+      setPdfError(err.message || TXT.exportarPdfError);
+    }
+  };
+
+  const imprimirContrato = (comodato) => {
+    setPdfError('');
+    try {
+      generarContratoPDF(comodato);
+    } catch (err) {
+      setPdfError(err.message || TXT.imprimirContratoError);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -189,6 +257,7 @@ export default function Comodatos() {
         type: 'actions',
         actions: [
           { label: TXT.registrarDevolucion, onClick: abrirDevolucion, disabled: (row) => row.estado !== 'ACTIVO' },
+          { label: TXT.imprimirContrato, onClick: imprimirContrato },
           { label: COMMON.edit, onClick: abrirEditar, disabled: (row) => row.estado !== 'ACTIVO' },
           { label: COMMON.delete, onClick: setAEliminar },
         ],
@@ -204,10 +273,20 @@ export default function Comodatos() {
           <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
           <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
         </div>
-        <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
-          {TXT.newButton}
-        </Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button variant="outline" icon={Filter} onClick={() => setFiltrosOpen(true)}>
+            {TXT.filtrosAvanzadosAction}
+          </Button>
+          <Button variant="outline" icon={FileDown} onClick={exportarPdf}>
+            {TXT.exportarPdf}
+          </Button>
+          <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
+            {TXT.newButton}
+          </Button>
+        </div>
       </div>
+
+      {pdfError && <FormMessage type="danger">{pdfError}</FormMessage>}
 
       <TableB
         columns={columns}
@@ -218,6 +297,7 @@ export default function Comodatos() {
         onRetry={cargar}
         emptyMessage={TXT.emptyMessage}
         scrollFooter
+        scrollFooterBgColor={"#d7fbfc74"}
         {...tableColors}
       />
 
@@ -269,7 +349,7 @@ export default function Comodatos() {
             label={TXT.fields.instrumento}
             options={opcionesInstrumentos}
             value={formData.instrumento_id}
-            onChange={(e) => handleChange({ target: { name: 'instrumento_id', value: e.target.value } })}
+            onChange={handleInstrumentoChange}
             required
           />
 
@@ -286,6 +366,68 @@ export default function Comodatos() {
             onChange={handleChange}
             required
           />
+
+          <Selector
+            label={TXT.fields.condicionInicial}
+            options={INSTRUMENTOS.estadosConservacion}
+            value={formData.condicion_inicial}
+            onChange={(e) => handleChange({ target: { name: 'condicion_inicial', value: e.target.value } })}
+          />
+          <MultilinePlaceholder
+            label={TXT.fields.observacionesIniciales}
+            value={formData.observaciones_iniciales}
+            onChange={(e) => handleChange({ target: { name: 'observaciones_iniciales', value: e.target.value } })}
+            rows={3}
+          />
+        </form>
+      </DrawPanel>
+
+      <DrawPanel
+        isOpen={filtrosOpen}
+        onClose={() => setFiltrosOpen(false)}
+        title={TXT.filtrosAvanzadosTitle}
+        showActions
+        formId="form-filtros-comodato"
+        confirmText={TXT.filtrosAvanzadosApply}
+      >
+        <form
+          id="form-filtros-comodato"
+          onSubmit={aplicarFiltros}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
+          <Selector
+            label={TXT.fields.estudiante}
+            options={[{ value: '', label: COMMON.all }, ...opcionesEstudiantes]}
+            value={filtros.estudiante_id}
+            onChange={(e) => handleFiltroChange({ target: { name: 'estudiante_id', value: e.target.value } })}
+          />
+          <Selector
+            label={TXT.fields.instrumento}
+            options={[{ value: '', label: COMMON.all }, ...instrumentos.map((i) => ({ value: i.id, label: `${i.nombre} (${i.codigo_inventario})` }))]}
+            value={filtros.instrumento_id}
+            onChange={(e) => handleFiltroChange({ target: { name: 'instrumento_id', value: e.target.value } })}
+          />
+          <CalendarPicker
+            label={TXT.fields.desde}
+            name="desde"
+            value={filtros.desde}
+            onChange={handleFiltroChange}
+          />
+          <CalendarPicker
+            label={TXT.fields.hasta}
+            name="hasta"
+            value={filtros.hasta}
+            onChange={handleFiltroChange}
+          />
+          <Selector
+            label={TXT.columns.estado}
+            options={[{ value: '', label: COMMON.all }, ...TXT.estados]}
+            value={filtros.estado}
+            onChange={(e) => handleFiltroChange({ target: { name: 'estado', value: e.target.value } })}
+          />
+          <Button type="button" variant="ghost" onClick={limpiarFiltros}>
+            {TXT.filtrosAvanzadosClear}
+          </Button>
         </form>
       </DrawPanel>
 

@@ -1,15 +1,60 @@
-import { Instrumento } from '../models/index.js';
+import { Op, Sequelize } from 'sequelize';
+import { sequelize, Instrumento, HistorialUbicacion, Usuario } from '../models/index.js';
 
-// Listar todos los instrumentos
+// Listar todos los instrumentos (admite filtros opcionales ?ubicacion= y ?tipo=)
 export const getInstrumentos = async (req, res) => {
   try {
+    const { ubicacion, tipo } = req.query;
+    const where = {};
+    if (ubicacion) where.ubicacion = { [Op.like]: `%${ubicacion}%` };
+    if (tipo) where.tipo = tipo;
+
     const instrumentos = await Instrumento.findAll({
+      where,
       order: [['id', 'DESC']],
     });
     res.json(instrumentos);
   } catch (error) {
     console.error('Error al obtener instrumentos:', error);
     res.status(500).json({ error: 'Error interno al obtener los instrumentos' });
+  }
+};
+
+// Resumen de stock agrupado por tipo y disponibilidad.
+// NULLIF(tipo, '') unifica NULL y '' como un mismo grupo "sin tipo", por si
+// quedaron filas antiguas guardadas con string vacío en vez de NULL.
+export const getStockPorTipo = async (req, res) => {
+  try {
+    const tipoNormalizado = Sequelize.fn('NULLIF', Sequelize.col('tipo'), '');
+    const stock = await Instrumento.findAll({
+      attributes: [
+        [tipoNormalizado, 'tipo'],
+        'estado_disponibilidad',
+        [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
+      ],
+      group: [tipoNormalizado, 'estado_disponibilidad'],
+      raw: true,
+    });
+    res.json(stock);
+  } catch (error) {
+    console.error('Error al obtener el stock por tipo:', error);
+    res.status(500).json({ error: 'Error interno al obtener el stock por tipo' });
+  }
+};
+
+// Historial de cambios de ubicación de un instrumento
+export const getHistorialUbicacion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const historial = await HistorialUbicacion.findAll({
+      where: { instrumento_id: id },
+      include: [{ model: Usuario, as: 'usuario', attributes: ['id', 'nombre'] }],
+      order: [['fecha', 'DESC'], ['id', 'DESC']],
+    });
+    res.json(historial);
+  } catch (error) {
+    console.error('Error al obtener el historial de ubicación:', error);
+    res.status(500).json({ error: 'Error interno al obtener el historial de ubicación' });
   }
 };
 
@@ -31,7 +76,7 @@ export const getInstrumentoById = async (req, res) => {
 // Crear un nuevo instrumento
 export const createInstrumento = async (req, res) => {
   try {
-    const { codigo_inventario, nombre, marca, modelo, numero_serie, medida, color, accesorios, estado_conservacion, estado_disponibilidad } = req.body;
+    const { codigo_inventario, nombre, marca, modelo, numero_serie, medida, color, accesorios, tipo, ubicacion, estado_conservacion, estado_disponibilidad } = req.body;
 
     if (!codigo_inventario || !nombre) {
       return res.status(400).json({ error: 'Código de inventario y nombre son campos requeridos' });
@@ -52,6 +97,8 @@ export const createInstrumento = async (req, res) => {
       medida,
       color,
       accesorios,
+      tipo: tipo || null,
+      ubicacion: ubicacion || null,
       estado_conservacion: estado_conservacion || 'BUENO',
       estado_disponibilidad: estado_disponibilidad || 'DISPONIBLE',
     });
@@ -65,21 +112,39 @@ export const createInstrumento = async (req, res) => {
 
 // Actualizar un instrumento existente
 export const updateInstrumento = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { id } = req.params;
-    const { codigo_inventario, nombre, marca, modelo, numero_serie, medida, color, accesorios, estado_conservacion, estado_disponibilidad } = req.body;
+    const { codigo_inventario, nombre, marca, modelo, numero_serie, medida, color, accesorios, tipo, ubicacion, estado_conservacion, estado_disponibilidad, usuario_id } = req.body;
 
-    const instrumento = await Instrumento.findByPk(id);
+    const instrumento = await Instrumento.findByPk(id, { transaction: t });
     if (!instrumento) {
+      await t.rollback();
       return res.status(404).json({ error: 'Instrumento no encontrado' });
     }
 
     // Validar duplicado de código de inventario si cambia
     if (codigo_inventario && codigo_inventario !== instrumento.codigo_inventario) {
-      const existeCodigo = await Instrumento.findOne({ where: { codigo_inventario } });
+      const existeCodigo = await Instrumento.findOne({ where: { codigo_inventario }, transaction: t });
       if (existeCodigo) {
+        await t.rollback();
         return res.status(400).json({ error: 'El código de inventario ya se encuentra registrado' });
       }
+    }
+
+    // Si la ubicación cambia, dejar constancia en el historial antes de actualizar
+    if (ubicacion !== undefined && ubicacion !== instrumento.ubicacion) {
+      let userId = usuario_id;
+      if (!userId) {
+        const defaultAdmin = await Usuario.findOne({ where: { email: 'admin@sigecoim.com' }, transaction: t });
+        userId = defaultAdmin ? defaultAdmin.id : 1;
+      }
+      await HistorialUbicacion.create({
+        instrumento_id: instrumento.id,
+        ubicacion_anterior: instrumento.ubicacion,
+        ubicacion_nueva: ubicacion,
+        usuario_id: userId,
+      }, { transaction: t });
     }
 
     await instrumento.update({
@@ -91,12 +156,16 @@ export const updateInstrumento = async (req, res) => {
       medida: medida !== undefined ? medida : instrumento.medida,
       color: color !== undefined ? color : instrumento.color,
       accesorios: accesorios !== undefined ? accesorios : instrumento.accesorios,
+      tipo: tipo !== undefined ? (tipo || null) : instrumento.tipo,
+      ubicacion: ubicacion !== undefined ? ubicacion : instrumento.ubicacion,
       estado_conservacion: estado_conservacion || instrumento.estado_conservacion,
       estado_disponibilidad: estado_disponibilidad || instrumento.estado_disponibilidad,
-    });
+    }, { transaction: t });
 
+    await t.commit();
     res.json(instrumento);
   } catch (error) {
+    await t.rollback();
     console.error('Error al actualizar instrumento:', error);
     res.status(500).json({ error: 'Error interno al actualizar el instrumento' });
   }

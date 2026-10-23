@@ -1,9 +1,22 @@
+import { Op } from 'sequelize';
 import { Estudiante, Representante, Comodato } from '../models/index.js';
 
-// Obtener todos los estudiantes con sus representantes
+// Obtener todos los estudiantes con sus representantes (admite ?q= para buscar por nombre/apellido/cédula)
 export const getEstudiantes = async (req, res) => {
   try {
+    const { q } = req.query;
+    const where = q
+      ? {
+          [Op.or]: [
+            { nombre: { [Op.like]: `%${q}%` } },
+            { apellido: { [Op.like]: `%${q}%` } },
+            { cedula: { [Op.like]: `%${q}%` } },
+          ],
+        }
+      : {};
+
     const estudiantes = await Estudiante.findAll({
+      where,
       include: [
         {
           model: Representante,

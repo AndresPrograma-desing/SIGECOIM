@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { TableB, DrawPanel, AlertModal, Button, TextField, Selector } from 'anteriority-ui';
+import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, Badge } from 'anteriority-ui';
+import { Plus, LayoutGrid, MapPin, PackageCheck } from 'lucide-react';
 import FormMessage from '../../../components/FormMessage';
-import { Plus } from 'lucide-react';
-import { getInstrumentos, createInstrumento, updateInstrumento, deleteInstrumento } from '../../../services/instrumentos';
+import {
+  getInstrumentos,
+  createInstrumento,
+  updateInstrumento,
+  deleteInstrumento,
+  getStockPorTipo,
+  getHistorialUbicacion,
+} from '../../../services/instrumentos';
 import { tableColors } from '../../../theme/tokens';
 import { COMMON, INSTRUMENTOS as TXT } from '../../../constants/text';
 
@@ -16,6 +23,8 @@ const FORM_INICIAL = {
   medida: '',
   color: '',
   accesorios: '',
+  tipo: '',
+  ubicacion: '',
   estado_conservacion: 'BUENO',
   estado_disponibilidad: 'DISPONIBLE',
 };
@@ -46,6 +55,16 @@ export default function Instrumentos() {
 
   const [aEliminar, setAEliminar] = useState(null);
   const [deleteError, setDeleteError] = useState('');
+
+  const [historialDe, setHistorialDe] = useState(null);
+  const [historial, setHistorial] = useState([]);
+  const [historialLoading, setHistorialLoading] = useState(false);
+  const [historialError, setHistorialError] = useState('');
+
+  const [stockOpen, setStockOpen] = useState(false);
+  const [stock, setStock] = useState([]);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockError, setStockError] = useState('');
 
   const cargar = async () => {
     setLoading(true);
@@ -82,12 +101,40 @@ export default function Instrumentos() {
       medida: instrumento.medida || '',
       color: instrumento.color || '',
       accesorios: instrumento.accesorios || '',
+      tipo: instrumento.tipo || '',
+      ubicacion: instrumento.ubicacion || '',
       estado_conservacion: instrumento.estado_conservacion || 'BUENO',
       estado_disponibilidad: instrumento.estado_disponibilidad || 'DISPONIBLE',
     });
     setSelectorData(SELECTOR_INICIAL);
     setFormError('');
     setPanelOpen(true);
+  };
+
+  const abrirHistorial = async (instrumento) => {
+    setHistorialDe(instrumento);
+    setHistorialError('');
+    setHistorialLoading(true);
+    try {
+      setHistorial(await getHistorialUbicacion(instrumento.id));
+    } catch (err) {
+      setHistorialError(err.message || TXT.loadError);
+    } finally {
+      setHistorialLoading(false);
+    }
+  };
+
+  const abrirStock = async () => {
+    setStockOpen(true);
+    setStockError('');
+    setStockLoading(true);
+    try {
+      setStock(await getStockPorTipo());
+    } catch (err) {
+      setStockError(err.message || TXT.loadError);
+    } finally {
+      setStockLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -160,6 +207,7 @@ export default function Instrumentos() {
       { key: 'codigo_inventario', label: TXT.columns.codigo },
       { key: 'nombre', label: TXT.columns.instrumento, render: (row) => `${row.nombre}${row.marca ? ` — ${row.marca}` : ''}` },
       { key: 'medida', label: TXT.columns.medida, render: (row) => row.medida || COMMON.notAvailable },
+      { key: 'ubicacion', label: TXT.columns.ubicacion, render: (row) => row.ubicacion || COMMON.notAvailable },
       { key: 'estado_conservacion', label: TXT.columns.conservacion },
       {
         key: 'estado_disponibilidad',
@@ -177,6 +225,7 @@ export default function Instrumentos() {
         label: COMMON.actions,
         type: 'actions',
         actions: [
+          { label: TXT.historialUbicacionAction, onClick: abrirHistorial },
           { label: COMMON.edit, onClick: abrirEditar },
           { label: COMMON.delete, onClick: setAEliminar },
         ],
@@ -192,9 +241,14 @@ export default function Instrumentos() {
           <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
           <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
         </div>
-        <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
-          {TXT.newButton}
-        </Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button variant="outline" icon={LayoutGrid} onClick={abrirStock}>
+            {TXT.stockPorTipoAction}
+          </Button>
+          <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
+            {TXT.newButton}
+          </Button>
+        </div>
       </div>
 
       <TableB
@@ -257,12 +311,19 @@ export default function Instrumentos() {
           ) : (
             <TextField label={TXT.fields.nombre} name="nombre" value={formData.nombre} onChange={handleChange} required />
           )}
-          <TextField label={TXT.fields.marca} name="marca" value={formData.marca} onChange={handleChange} />
+          <TextField label={TXT.fields.marca} name="marca" value={formData.marca} onChange={handleChange} placeholder={TXT.fields.marcaPlaceholder} />
           <TextField label={TXT.fields.modelo} name="modelo" value={formData.modelo} onChange={handleChange} />
           <TextField label={TXT.fields.numeroSerie} name="numero_serie" value={formData.numero_serie} onChange={handleChange} />
           <TextField label={TXT.fields.medida} name="medida" value={formData.medida} onChange={handleChange} placeholder={TXT.fields.medidaPlaceholder} />
           <TextField label={TXT.fields.color} name="color" value={formData.color} onChange={handleChange} />
           <TextField label={TXT.fields.accesorios} name="accesorios" value={formData.accesorios} onChange={handleChange} placeholder={TXT.fields.accesoriosPlaceholder} />
+          <Selector
+            label={TXT.fields.tipo}
+            options={TXT.tiposInstrumento}
+            value={formData.tipo}
+            onChange={(e) => handleChange({ target: { name: 'tipo', value: e.target.value } })}
+          />
+          <TextField label={TXT.fields.ubicacion} name="ubicacion" value={formData.ubicacion} onChange={handleChange} placeholder={TXT.fields.ubicacionPlaceholder} />
           <Selector
             label={TXT.fields.estadoConservacion}
             options={TXT.estadosConservacion}
@@ -276,6 +337,57 @@ export default function Instrumentos() {
             onChange={(e) => handleChange({ target: { name: 'estado_disponibilidad', value: e.target.value } })}
           />
         </form>
+      </DrawPanel>
+
+      <DrawPanel
+        isOpen={Boolean(historialDe)}
+        onClose={() => setHistorialDe(null)}
+        title={TXT.historialUbicacionTitle}
+        description={historialDe ? `${historialDe.nombre} — ${historialDe.codigo_inventario}` : ''}
+      >
+        {historialError && <FormMessage type="danger">{historialError}</FormMessage>}
+        {!historialLoading && !historialError && historial.length === 0 && (
+          <p style={{ color: '#476788', fontSize: 14 }}>{TXT.historialUbicacionEmpty}</p>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {historial.map((h) => (
+            <div key={h.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: 12, border: '1px solid #e2e8f0', borderRadius: 12 }}>
+              <MapPin size={18} color="#0b3558" style={{ marginTop: 2 }} />
+              <div>
+                <div style={{ fontSize: 13, color: '#0b3558', fontWeight: 600 }}>
+                  {h.ubicacion_anterior || COMMON.notAvailable} → {h.ubicacion_nueva}
+                </div>
+                <div style={{ fontSize: 12, color: '#476788' }}>
+                  {h.fecha} — {TXT.historialUbicacionColumns.usuario}: {h.usuario?.nombre || COMMON.notAvailable}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </DrawPanel>
+
+      <DrawPanel
+        isOpen={stockOpen}
+        onClose={() => setStockOpen(false)}
+        title={TXT.stockPorTipoTitle}
+      >
+        {stockError && <FormMessage type="danger">{stockError}</FormMessage>}
+        {!stockLoading && !stockError && stock.length === 0 && (
+          <p style={{ color: '#476788', fontSize: 14 }}>{TXT.stockPorTipoEmpty}</p>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {stock.map((row, idx) => (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, border: '1px solid #e2e8f0', borderRadius: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <PackageCheck size={18} color="#0b3558" />
+                <span style={{ fontSize: 14, color: '#0b3558', fontWeight: 600 }}>
+                  {row.tipo || TXT.stockPorTipoSinClasificar}
+                </span>
+              </div>
+              <Badge label={row.estado_disponibilidad} value={row.total} />
+            </div>
+          ))}
+        </div>
       </DrawPanel>
 
       <AlertModal

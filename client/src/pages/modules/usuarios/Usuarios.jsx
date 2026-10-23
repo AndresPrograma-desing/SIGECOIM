@@ -123,7 +123,12 @@ export default function Usuarios() {
       {
         key: 'estado',
         label: TXT.columns.estado,
-        render: (row) => <Swich value={row.estado} onChange={() => handleToggle(row)} />,
+        render: (row) => <Swich
+          value={row.estado}
+          onChange={() => handleToggle(row)}
+          icons={{ checked: 'check', uncheck: 'x' }}
+          {...tableColors}
+        />,
       },
       {
         key: 'actions',
