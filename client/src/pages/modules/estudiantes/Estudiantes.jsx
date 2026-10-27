@@ -5,7 +5,7 @@ import FormMessage from '../../../components/FormMessage';
 import { Plus } from 'lucide-react';
 import { getEstudiantes, createEstudiante, updateEstudiante, deleteEstudiante } from '../../../services/estudiantes';
 import { calcularEdad, esMenorDeEdad, esFechaFutura } from '../../../utils/edad';
-import { tableColors } from '../../../theme/tokens';
+import { tableColors, drawPanelColors } from '../../../theme/tokens';
 import { COMMON, ESTUDIANTES as TXT } from '../../../constants/text';
 
 const FORM_INICIAL = {
@@ -162,8 +162,8 @@ export default function Estudiantes() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
-          <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
+          <h1 style={{ margin: 0, fontSize: 28, color: '#3e2723' }}>{TXT.pageTitle}</h1>
+          <p style={{ margin: '4px 0 0', color: '#8d7566' }}>{TXT.pageSubtitle}</p>
         </div>
         <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
           {TXT.newButton}
@@ -183,6 +183,7 @@ export default function Estudiantes() {
       />
 
       <DrawPanel
+        {...drawPanelColors}
         isOpen={panelOpen}
         onClose={() => setPanelOpen(false)}
         title={editando ? TXT.editTitle : TXT.newTitle}

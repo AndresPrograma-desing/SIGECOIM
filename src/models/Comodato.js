@@ -10,7 +10,7 @@ const Comodato = sequelize.define('COMODATO', {
   folio_contrato: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: true,
+    unique: 'uq_comodato_folio_contrato',
   },
   fecha_inicio: {
     type: DataTypes.DATEONLY,

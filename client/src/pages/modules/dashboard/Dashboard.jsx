@@ -80,8 +80,8 @@ export default function Dashboard() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
-        <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
+        <h1 style={{ margin: 0, fontSize: 28, color: '#3e2723' }}>{TXT.pageTitle}</h1>
+        <p style={{ margin: '4px 0 0', color: '#8d7566' }}>{TXT.pageSubtitle}</p>
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -89,8 +89,8 @@ export default function Dashboard() {
         <Badge icon={Phone} label={TXT.alertasPorVencer} value={porVencer.length} />
       </div>
 
-      <h2 style={{ fontSize: 18, color: '#0b3558', marginBottom: 4 }}>{TXT.alertasTitle}</h2>
-      <p style={{ margin: '0 0 12px', color: '#476788', fontSize: 13 }}>{TXT.alertasVentana(diasVentana)}</p>
+      <h2 style={{ fontSize: 18, color: '#3e2723', marginBottom: 4 }}>{TXT.alertasTitle}</h2>
+      <p style={{ margin: '0 0 12px', color: '#8d7566', fontSize: 13 }}>{TXT.alertasVentana(diasVentana)}</p>
       <TableB
         columns={columns}
         data={alertas}
@@ -103,13 +103,13 @@ export default function Dashboard() {
         {...tableColors}
       />
 
-      <h2 style={{ fontSize: 18, color: '#0b3558', margin: '28px 0 12px' }}>{TXT.stockTitle}</h2>
+      <h2 style={{ fontSize: 18, color: '#3e2723', margin: '28px 0 12px' }}>{TXT.stockTitle}</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {stock.map((row, idx) => (
           <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, border: '1px solid #e2e8f0', borderRadius: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <PackageCheck size={18} color="#0b3558" />
-              <span style={{ fontSize: 14, color: '#0b3558', fontWeight: 600 }}>{row.tipo || '—'}</span>
+              <PackageCheck size={18} color="#3e2723" />
+              <span style={{ fontSize: 14, color: '#3e2723', fontWeight: 600 }}>{row.tipo || '—'}</span>
             </div>
             <Badge label={row.estado_disponibilidad} value={row.total} />
           </div>

@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { Estudiante, Representante, Comodato } from '../models/index.js';
+import { handleSequelizeError } from '../utils/sequelizeErrors.js';
 
 // Obtener todos los estudiantes con sus representantes (admite ?q= para buscar por nombre/apellido/cédula)
 export const getEstudiantes = async (req, res) => {
@@ -124,7 +125,7 @@ export const createEstudiante = async (req, res) => {
     res.status(201).json(estudianteCompleto);
   } catch (error) {
     console.error('Error al crear estudiante:', error);
-    res.status(500).json({ error: 'Error interno del servidor al crear estudiante.' });
+    handleSequelizeError(error, res, 'Error interno del servidor al crear estudiante.');
   }
 };
 
@@ -223,7 +224,7 @@ export const updateEstudiante = async (req, res) => {
     res.json(estudianteActualizado);
   } catch (error) {
     console.error('Error al actualizar estudiante:', error);
-    res.status(500).json({ error: 'Error interno del servidor al actualizar estudiante.' });
+    handleSequelizeError(error, res, 'Error interno del servidor al actualizar estudiante.');
   }
 };
 

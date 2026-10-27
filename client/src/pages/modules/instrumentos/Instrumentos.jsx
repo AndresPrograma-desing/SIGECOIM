@@ -11,7 +11,7 @@ import {
   getStockPorTipo,
   getHistorialUbicacion,
 } from '../../../services/instrumentos';
-import { tableColors } from '../../../theme/tokens';
+import { tableColors, drawPanelColors } from '../../../theme/tokens';
 import { COMMON, INSTRUMENTOS as TXT } from '../../../constants/text';
 
 const FORM_INICIAL = {
@@ -238,8 +238,8 @@ export default function Instrumentos() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
-          <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
+          <h1 style={{ margin: 0, fontSize: 28, color: '#3e2723' }}>{TXT.pageTitle}</h1>
+          <p style={{ margin: '4px 0 0', color: '#8d7566' }}>{TXT.pageSubtitle}</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="outline" icon={LayoutGrid} onClick={abrirStock}>
@@ -264,6 +264,7 @@ export default function Instrumentos() {
       />
 
       <DrawPanel
+        {...drawPanelColors}
         isOpen={panelOpen}
         onClose={() => setPanelOpen(false)}
         title={editando ? TXT.editTitle : TXT.newTitle}
@@ -340,6 +341,7 @@ export default function Instrumentos() {
       </DrawPanel>
 
       <DrawPanel
+        {...drawPanelColors}
         isOpen={Boolean(historialDe)}
         onClose={() => setHistorialDe(null)}
         title={TXT.historialUbicacionTitle}
@@ -347,17 +349,17 @@ export default function Instrumentos() {
       >
         {historialError && <FormMessage type="danger">{historialError}</FormMessage>}
         {!historialLoading && !historialError && historial.length === 0 && (
-          <p style={{ color: '#476788', fontSize: 14 }}>{TXT.historialUbicacionEmpty}</p>
+          <p style={{ color: '#8d7566', fontSize: 14 }}>{TXT.historialUbicacionEmpty}</p>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {historial.map((h) => (
             <div key={h.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: 12, border: '1px solid #e2e8f0', borderRadius: 12 }}>
-              <MapPin size={18} color="#0b3558" style={{ marginTop: 2 }} />
+              <MapPin size={18} color="#3e2723" style={{ marginTop: 2 }} />
               <div>
-                <div style={{ fontSize: 13, color: '#0b3558', fontWeight: 600 }}>
+                <div style={{ fontSize: 13, color: '#3e2723', fontWeight: 600 }}>
                   {h.ubicacion_anterior || COMMON.notAvailable} → {h.ubicacion_nueva}
                 </div>
-                <div style={{ fontSize: 12, color: '#476788' }}>
+                <div style={{ fontSize: 12, color: '#8d7566' }}>
                   {h.fecha} — {TXT.historialUbicacionColumns.usuario}: {h.usuario?.nombre || COMMON.notAvailable}
                 </div>
               </div>
@@ -367,20 +369,21 @@ export default function Instrumentos() {
       </DrawPanel>
 
       <DrawPanel
+        {...drawPanelColors}
         isOpen={stockOpen}
         onClose={() => setStockOpen(false)}
         title={TXT.stockPorTipoTitle}
       >
         {stockError && <FormMessage type="danger">{stockError}</FormMessage>}
         {!stockLoading && !stockError && stock.length === 0 && (
-          <p style={{ color: '#476788', fontSize: 14 }}>{TXT.stockPorTipoEmpty}</p>
+          <p style={{ color: '#8d7566', fontSize: 14 }}>{TXT.stockPorTipoEmpty}</p>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {stock.map((row, idx) => (
             <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, border: '1px solid #e2e8f0', borderRadius: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <PackageCheck size={18} color="#0b3558" />
-                <span style={{ fontSize: 14, color: '#0b3558', fontWeight: 600 }}>
+                <PackageCheck size={18} color="#3e2723" />
+                <span style={{ fontSize: 14, color: '#3e2723', fontWeight: 600 }}>
                   {row.tipo || TXT.stockPorTipoSinClasificar}
                 </span>
               </div>

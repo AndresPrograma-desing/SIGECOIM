@@ -1,5 +1,6 @@
 import { Op, Sequelize } from 'sequelize';
 import { sequelize, Instrumento, HistorialUbicacion, Usuario } from '../models/index.js';
+import { handleSequelizeError } from '../utils/sequelizeErrors.js';
 
 // Listar todos los instrumentos (admite filtros opcionales ?ubicacion= y ?tipo=)
 export const getInstrumentos = async (req, res) => {
@@ -106,7 +107,7 @@ export const createInstrumento = async (req, res) => {
     res.status(201).json(nuevoInstrumento);
   } catch (error) {
     console.error('Error al crear instrumento:', error);
-    res.status(500).json({ error: 'Error interno al crear el instrumento' });
+    handleSequelizeError(error, res, 'Error interno al crear el instrumento');
   }
 };
 
@@ -167,7 +168,7 @@ export const updateInstrumento = async (req, res) => {
   } catch (error) {
     await t.rollback();
     console.error('Error al actualizar instrumento:', error);
-    res.status(500).json({ error: 'Error interno al actualizar el instrumento' });
+    handleSequelizeError(error, res, 'Error interno al actualizar el instrumento');
   }
 };
 

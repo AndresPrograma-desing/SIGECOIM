@@ -54,8 +54,8 @@ export default function Configuracion() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
-        <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
+        <h1 style={{ margin: 0, fontSize: 28, color: '#3e2723' }}>{TXT.pageTitle}</h1>
+        <p style={{ margin: '4px 0 0', color: '#8d7566' }}>{TXT.pageSubtitle}</p>
       </div>
 
       {loadError && <FormMessage type="danger">{loadError}</FormMessage>}

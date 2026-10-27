@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar, TopBar, NotificationsPanel } from 'anteriority-ui';
-import { LogOut, Bell } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { NAV } from '../constants/text';
 import { topBarColors, notificationsPanelColors, commandPaletteColors } from '../theme/tokens';
 import { NAV_ITEMS } from './constants';
+import sidebarLogo from '../assets/sidebar-logo-light.png';
 import styles from './AppLayout.module.css';
 
 export default function AppLayout() {
-  const { usuario, logout, puedeAdministrarUsuarios } = useAuth();
+  const { logout, puedeAdministrarUsuarios } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState('');
@@ -44,10 +45,25 @@ export default function AppLayout() {
         activeId={activeItem?.id}
         onSelect={(item) => navigate(item.path)}
         collapsible={false}
-        user={{ email: usuario?.email }}
-        userMenuItems={[
-          { id: 'logout', label: NAV.logout, icon: LogOut, onClick: logout, variant: 'danger' },
-        ]}
+        headerContent={
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: 10,
+              padding: '10px 14px',
+              margin: '8px auto',
+              maxWidth: 160,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <img
+              src={sidebarLogo}
+              alt="El Sistema"
+              style={{ width: '100%', display: 'block' }}
+            />
+          </div>
+        }
       />
       <div style={{ flex: 1, minWidth: 0, maxWidth: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
         <TopBar
@@ -57,11 +73,11 @@ export default function AppLayout() {
             onChange: (e) => setSearch(e.target.value),
             placeholder: NAV.searchPlaceholder,
           }}
-          actions={[
-            { key: 'notifications', icon: Bell, tooltip: NAV.notifications, onClick: () => setNotificationsOpen((open) => !open) },
-          ]}
           commandItems={commandItems}
           commandPalettePlaceholder={NAV.commandPalettePlaceholder}
+          actions={[
+            { key: 'logout', icon: LogOut, tooltip: NAV.logout, onClick: logout },
+          ]}
           {...topBarColors}
           {...commandPaletteColors}
         />
@@ -78,8 +94,8 @@ export default function AppLayout() {
               zIndex: 20,
               borderRadius: 12,
               overflow: 'hidden',
-              boxShadow: '0 10px 25px rgba(11, 53, 88, 0.18)',
-              border: '1px solid #e2e8f0',
+              boxShadow: '0 10px 25px rgba(62, 39, 35, 0.18)',
+              border: '1px solid #e3d4c2',
             }}
           >
             <NotificationsPanel
@@ -91,7 +107,7 @@ export default function AppLayout() {
           </div>
         )}
 
-        <main style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '32px', background: '#f8f9fb' }}>
+        <main style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '32px', background: '#fbf6ef' }}>
           <Outlet context={{ search }} />
         </main>
       </div>

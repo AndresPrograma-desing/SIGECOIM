@@ -13,7 +13,7 @@ export const COMMON = {
 };
 
 export const LOGIN = {
-  title: 'SIGECOIM',
+  title: 'El Sistema',
   subtitle: 'Gestión de comodatos de instrumentos musicales',
   errorTitle: 'No se pudo iniciar sesión',
   genericError: 'No se pudo iniciar sesión.',

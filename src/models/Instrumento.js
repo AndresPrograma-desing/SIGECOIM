@@ -10,7 +10,7 @@ const Instrumento = sequelize.define('INSTRUMENTO', {
   codigo_inventario: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: true,
+    unique: 'uq_instrumento_codigo_inventario',
   },
   nombre: {
     type: DataTypes.STRING(100),
@@ -27,7 +27,7 @@ const Instrumento = sequelize.define('INSTRUMENTO', {
   numero_serie: {
     type: DataTypes.STRING(100),
     allowNull: true,
-    unique: true,
+    unique: 'uq_instrumento_numero_serie',
   },
   medida: {
     type: DataTypes.STRING(50),
