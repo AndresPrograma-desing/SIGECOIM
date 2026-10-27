@@ -1,6 +1,7 @@
 import { Op, Sequelize } from 'sequelize';
 import { sequelize, Comodato, Instrumento, Estudiante, Representante, Usuario, Devolucion } from '../models/index.js';
 import { getConfigValor } from './configuracionController.js';
+import { handleSequelizeError } from '../utils/sequelizeErrors.js';
 
 const MAX_INSTRUMENTOS_POR_ESTUDIANTE = 1;
 
@@ -198,7 +199,7 @@ export const createComodato = async (req, res) => {
   } catch (error) {
     await t.rollback();
     console.error('Error al registrar comodato:', error);
-    res.status(500).json({ error: 'Error interno al registrar el comodato' });
+    handleSequelizeError(error, res, 'Error interno al registrar el comodato');
   }
 };
 
@@ -271,7 +272,7 @@ export const registrarDevolucion = async (req, res) => {
   } catch (error) {
     await t.rollback();
     console.error('Error al registrar devolución:', error);
-    res.status(500).json({ error: 'Error interno al registrar la devolución' });
+    handleSequelizeError(error, res, 'Error interno al registrar la devolución');
   }
 };
 
@@ -337,7 +338,7 @@ export const updateComodato = async (req, res) => {
   } catch (error) {
     await t.rollback();
     console.error('Error al actualizar comodato:', error);
-    res.status(500).json({ error: 'Error interno al actualizar el comodato' });
+    handleSequelizeError(error, res, 'Error interno al actualizar el comodato');
   }
 };
 

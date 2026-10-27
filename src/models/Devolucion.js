@@ -10,7 +10,7 @@ const Devolucion = sequelize.define('DEVOLUCION', {
   comodato_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    unique: true,
+    unique: 'uq_devolucion_comodato_id',
     references: {
       model: 'COMODATO',
       key: 'id',

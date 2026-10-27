@@ -1,19 +1,19 @@
 import { createTheme } from '@mui/material/styles';
 import { colors, shadows } from './tokens';
 
-// Extiende el theme base de anteriority-ui con la paleta "Calendly" (navy sobre
-// mármol, azul señal como único acento) en vez de reemplazarlo, para no perder
-// la tipografía/normalización que trae por default.
+// Extiende el theme base de anteriority-ui con la paleta "Madera y cobre" (caoba
+// sobre crema tipo papel de partitura, cobre como único acento) en vez de
+// reemplazarlo, para no perder la tipografía/normalización que trae por default.
 const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: colors.signalBlue, contrastText: colors.paper },
-    secondary: { main: colors.inkNavy, contrastText: colors.paper },
+    primary: { main: colors.copper, contrastText: colors.paper },
+    secondary: { main: colors.inkMahogany, contrastText: colors.paper },
     error: { main: colors.danger },
     success: { main: colors.success },
     warning: { main: colors.warning },
-    text: { primary: colors.inkNavy, secondary: colors.slateGray },
-    background: { default: colors.cloud, paper: colors.paper },
+    text: { primary: colors.inkMahogany, secondary: colors.taupe },
+    background: { default: colors.cream, paper: colors.paper },
     divider: colors.hairline,
   },
   typography: {

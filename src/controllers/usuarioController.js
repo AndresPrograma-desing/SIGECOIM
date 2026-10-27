@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { Usuario } from '../models/index.js';
-import { createContextHubUser, editContextHubUser, listContextHubUsers } from '../services/contextHubService.js';
+import { handleSequelizeError } from '../utils/sequelizeErrors.js';
 
 // Obtener todos los usuarios (excluyendo la contraseña)
 export const getUsuarios = async (req, res) => {
@@ -44,19 +44,6 @@ export const createUsuario = async (req, res) => {
       estado: true,
     });
 
-    // Sincronizar creación de usuario en ContextHub
-    try {
-      const chResult = await createContextHubUser(email, password);
-      if (chResult?.ok && chResult.user?.id) {
-        nuevoUsuario.contextHubUserId = chResult.user.id;
-        await nuevoUsuario.save();
-      } else {
-        console.warn('ContextHub no devolvió un userId al crear el usuario:', chResult?.error);
-      }
-    } catch (chErr) {
-      console.warn('Advertencia al sincronizar nuevo usuario con ContextHub:', chErr.message);
-    }
-
     res.status(201).json({
       message: 'Usuario registrado con éxito.',
       usuario: {
@@ -69,7 +56,7 @@ export const createUsuario = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al crear usuario:', error);
-    res.status(500).json({ error: 'Ocurrió un error al registrar el nuevo usuario.' });
+    handleSequelizeError(error, res, 'Ocurrió un error al registrar el nuevo usuario.');
   }
 };
 
@@ -113,8 +100,6 @@ export const updateUsuario = async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
 
-    const contextHubChanges = {};
-
     // Verificar si el correo ya existe en otro usuario
     if (email && email !== usuario.email) {
       const existeEmail = await Usuario.findOne({ where: { email } });
@@ -122,7 +107,6 @@ export const updateUsuario = async (req, res) => {
         return res.status(400).json({ error: 'El correo electrónico ya está registrado por otro usuario.' });
       }
       usuario.email = email;
-      contextHubChanges.email = email;
     }
 
     if (nombre) usuario.nombre = nombre;
@@ -132,26 +116,9 @@ export const updateUsuario = async (req, res) => {
     if (password && password.trim() !== '') {
       const salt = await bcrypt.genSalt(10);
       usuario.password = await bcrypt.hash(password, salt);
-      contextHubChanges.password = password;
     }
 
     await usuario.save();
-
-    // Sincronizar cambios de email/password con ContextHub
-    if (Object.keys(contextHubChanges).length > 0) {
-      if (usuario.contextHubUserId) {
-        try {
-          const chResult = await editContextHubUser(usuario.contextHubUserId, contextHubChanges);
-          if (!chResult?.ok) {
-            console.warn('ContextHub no pudo sincronizar la edición del usuario:', chResult?.error);
-          }
-        } catch (chErr) {
-          console.warn('Advertencia al sincronizar edición de usuario con ContextHub:', chErr.message);
-        }
-      } else {
-        console.warn(`Usuario ${usuario.id} no tiene contextHubUserId; no se pudo sincronizar la edición con ContextHub.`);
-      }
-    }
 
     res.json({
       message: 'Usuario actualizado con éxito.',
@@ -165,7 +132,7 @@ export const updateUsuario = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al actualizar usuario:', error);
-    res.status(500).json({ error: 'Ocurrió un error al actualizar el usuario.' });
+    handleSequelizeError(error, res, 'Ocurrió un error al actualizar el usuario.');
   }
 };
 
@@ -188,43 +155,5 @@ export const deleteUsuario = async (req, res) => {
   } catch (error) {
     console.error('Error al eliminar usuario:', error);
     res.status(500).json({ error: 'Ocurrió un error al eliminar el usuario.' });
-  }
-};
-
-// Sincronizar usuarios locales con los vinculados en ContextHub (empareja por email)
-export const syncContextHubUsers = async (req, res) => {
-  try {
-    const chResult = await listContextHubUsers();
-    if (!chResult?.ok) {
-      return res.status(502).json({ error: chResult?.error || 'No se pudo obtener la lista de usuarios de ContextHub.' });
-    }
-
-    const chUsersByEmail = new Map(chResult.users.map((u) => [u.email.toLowerCase(), u]));
-    const usuarios = await Usuario.findAll();
-
-    let actualizados = 0;
-    const sinCoincidencia = [];
-
-    for (const usuario of usuarios) {
-      const chUser = chUsersByEmail.get(usuario.email.toLowerCase());
-      if (chUser && chUser.user_id !== usuario.contextHubUserId) {
-        usuario.contextHubUserId = chUser.user_id;
-        await usuario.save();
-        actualizados++;
-      } else if (!chUser) {
-        sinCoincidencia.push(usuario.email);
-      }
-    }
-
-    res.json({
-      message: 'Sincronización con ContextHub completada.',
-      totalContextHub: chResult.users.length,
-      totalLocal: usuarios.length,
-      actualizados,
-      sinCoincidencia,
-    });
-  } catch (error) {
-    console.error('Error al sincronizar usuarios con ContextHub:', error);
-    res.status(500).json({ error: 'Ocurrió un error al sincronizar con ContextHub.' });
   }
 };

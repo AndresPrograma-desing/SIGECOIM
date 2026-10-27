@@ -14,7 +14,7 @@ const Usuario = sequelize.define('USUARIO', {
   email: {
     type: DataTypes.STRING(100),
     allowNull: false,
-    unique: true,
+    unique: 'uq_usuario_email',
     validate: {
       isEmail: true,
     },
@@ -32,10 +32,6 @@ const Usuario = sequelize.define('USUARIO', {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: true,
-  },
-  contextHubUserId: {
-    type: DataTypes.STRING(64),
-    allowNull: true,
   },
 }, {
   tableName: 'USUARIO',

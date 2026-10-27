@@ -1,5 +1,6 @@
 import { sequelize, Solicitud, Estudiante, Representante, Instrumento, Comodato } from '../models/index.js';
 import { generarFolioContrato } from './comodatoController.js';
+import { handleSequelizeError } from '../utils/sequelizeErrors.js';
 
 const includeCompleto = [
   {
@@ -42,7 +43,7 @@ export const crearSolicitud = async (req, res) => {
     res.status(201).json(solicitudCompleta);
   } catch (error) {
     console.error('Error al crear solicitud:', error);
-    res.status(500).json({ error: 'Error interno al registrar la solicitud.' });
+    handleSequelizeError(error, res, 'Error interno al registrar la solicitud.');
   }
 };
 
@@ -126,7 +127,7 @@ export const aprobarSolicitud = async (req, res) => {
   } catch (error) {
     await t.rollback();
     console.error('Error al aprobar solicitud:', error);
-    res.status(500).json({ error: 'Error interno al aprobar la solicitud.' });
+    handleSequelizeError(error, res, 'Error interno al aprobar la solicitud.');
   }
 };
 

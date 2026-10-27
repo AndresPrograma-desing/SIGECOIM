@@ -7,7 +7,7 @@ import { getComodatos, createComodato, updateComodato, deleteComodato, registrar
 import { getEstudiantes } from '../../../services/estudiantes';
 import { getInstrumentos } from '../../../services/instrumentos';
 import { esMenorDeEdad } from '../../../utils/edad';
-import { tableColors } from '../../../theme/tokens';
+import { tableColors, drawPanelColors } from '../../../theme/tokens';
 import { COMMON, COMODATOS as TXT, INSTRUMENTOS } from '../../../constants/text';
 import { generarReporteComodatosPDF } from '../../../utils/pdf/reporteComodatos';
 import { generarContratoPDF } from '../../../utils/pdf/contratoComodato';
@@ -270,8 +270,8 @@ export default function Comodatos() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, color: '#0b3558' }}>{TXT.pageTitle}</h1>
-          <p style={{ margin: '4px 0 0', color: '#476788' }}>{TXT.pageSubtitle}</p>
+          <h1 style={{ margin: 0, fontSize: 28, color: '#3e2723' }}>{TXT.pageTitle}</h1>
+          <p style={{ margin: '4px 0 0', color: '#8d7566' }}>{TXT.pageSubtitle}</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="outline" icon={Filter} onClick={() => setFiltrosOpen(true)}>
@@ -302,6 +302,7 @@ export default function Comodatos() {
       />
 
       <DrawPanel
+        {...drawPanelColors}
         isOpen={panelOpen}
         onClose={() => setPanelOpen(false)}
         title={editando ? TXT.editTitle : TXT.newTitle}
@@ -383,6 +384,7 @@ export default function Comodatos() {
       </DrawPanel>
 
       <DrawPanel
+        {...drawPanelColors}
         isOpen={filtrosOpen}
         onClose={() => setFiltrosOpen(false)}
         title={TXT.filtrosAvanzadosTitle}
@@ -432,6 +434,7 @@ export default function Comodatos() {
       </DrawPanel>
 
       <DrawPanel
+        {...drawPanelColors}
         isOpen={Boolean(devolucionDe)}
         onClose={() => setDevolucionDe(null)}
         title={TXT.devolucionTitle}

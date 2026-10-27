@@ -4,17 +4,18 @@
 :root {
   --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  /* Sidebar en tono navy/marmol en vez del glass verde/celeste por default */
-  --sidebar-bg: #0b3558;
-  --sidebar-text: #f8f9fb;
-  --sidebar-text-muted: #a6bbd1;
+  /* Sidebar en tono caoba/madera oscura, con acentos de cobre, en vez del
+     glass verde/celeste por default */
+  --sidebar-bg: #2c1810;
+  --sidebar-text: #fbf6ef;
+  --sidebar-text-muted: #d8c3ae;
   --sidebar-text-active: #ffffff;
-  --sidebar-hover-bg: rgba(255, 255, 255, 0.08);
-  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-hover-bg: rgba(251, 246, 239, 0.08);
+  --sidebar-border: rgba(251, 246, 239, 0.12);
   --sidebar-border-right: none;
   --sidebar-blur: none;
-  --sidebar-avatar-bg: #006bff;
-  --sidebar-pinned-icon: #006bff;
+  --sidebar-avatar-bg: #b5651d;
+  --sidebar-pinned-icon: #d4a24c;
 }
 
 * {
@@ -23,11 +24,42 @@
 
 html, body {
   margin: 0;
-  background: #f8f9fb;
-  color: #0b3558;
+  background: #fbf6ef;
+  color: #3e2723;
   overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* El menú de usuario del Sidebar (anteriority-ui) se pinta por un portal a
+   document.body vía CSS module propio, sin props de color expuestas, así que
+   se skinnea acá por selector de clase (Vite conserva el nombre local de la
+   clase como substring del hash generado, p.ej. "_userMenu_xxxxx"). */
+div[class*='_userMenu_'] {
+  background: #fffdfa !important;
+  border-color: #e3d4c2 !important;
+  box-shadow: 0 10px 25px rgba(62, 39, 35, 0.18) !important;
+}
+
+div[class*='_userMenuEmail_'] {
+  color: #8d7566 !important;
+  border-bottom-color: #e3d4c2 !important;
+}
+
+button[class*='_userMenuItem_']:not([class*='_userMenuItemDanger_']) {
+  color: #3e2723 !important;
+}
+
+button[class*='_userMenuItem_']:not([class*='_userMenuItemDanger_']):hover {
+  background-color: #f3eade !important;
+}
+
+button[class*='_userMenuItemDanger_']:hover {
+  background-color: #fbeae8 !important;
+}
+
+div[class*='_userMenuLinks_'] {
+  border-top-color: #e3d4c2 !important;
 }

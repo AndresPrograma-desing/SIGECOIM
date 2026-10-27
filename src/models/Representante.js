@@ -10,7 +10,7 @@ const Representante = sequelize.define('REPRESENTANTE', {
   cedula: {
     type: DataTypes.STRING(20),
     allowNull: false,
-    unique: true,
+    unique: 'uq_representante_cedula',
   },
   nombre: {
     type: DataTypes.STRING(100),
@@ -27,7 +27,7 @@ const Representante = sequelize.define('REPRESENTANTE', {
   email: {
     type: DataTypes.STRING(100),
     allowNull: true,
-    unique: true,
+    unique: 'uq_representante_email',
     validate: {
       isEmail: true,
     },

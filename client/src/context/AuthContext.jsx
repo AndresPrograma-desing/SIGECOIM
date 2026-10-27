@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState } from 'react';
-import { login as loginRequest, sdkLogin as sdkLoginRequest } from '../services/auth';
+import { login as loginRequest } from '../services/auth';
 
 const TOKEN_KEY = 'sigecoim_token';
 const USER_KEY = 'sigecoim_usuario';
@@ -26,14 +26,6 @@ export function AuthProvider({ children }) {
     return nuevoUsuario;
   };
 
-  const loginWithSdk = async (ticket) => {
-    const { token, usuario: nuevoUsuario } = await sdkLoginRequest(ticket);
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(nuevoUsuario));
-    setUsuario(nuevoUsuario);
-    return nuevoUsuario;
-  };
-
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -43,7 +35,7 @@ export function AuthProvider({ children }) {
   const puedeAdministrarUsuarios = usuario?.rol === 'ADMINISTRADOR' || usuario?.rol === 'ANALISTA_BIENES';
 
   const value = useMemo(
-    () => ({ usuario, login, loginWithSdk, logout, puedeAdministrarUsuarios }),
+    () => ({ usuario, login, logout, puedeAdministrarUsuarios }),
     [usuario],
   );
 
