@@ -5,17 +5,23 @@
   --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   /* Sidebar en tono caoba/madera oscura, con acentos de cobre, en vez del
-     glass verde/celeste por default */
-  --sidebar-bg: #2c1810;
-  --sidebar-text: #fbf6ef;
-  --sidebar-text-muted: #d8c3ae;
-  --sidebar-text-active: #ffffff;
-  --sidebar-hover-bg: rgba(251, 246, 239, 0.08);
-  --sidebar-border: rgba(251, 246, 239, 0.12);
-  --sidebar-border-right: none;
-  --sidebar-blur: none;
-  --sidebar-avatar-bg: #b5651d;
-  --sidebar-pinned-icon: #d4a24c;
+     glass verde/celeste por default.
+     !important es necesario: el CSS Module propio del componente Sidebar de
+     anteriority-ui (Sidebar/index.module.css) trae su propio bloque ":root"
+     con sus valores por defecto, y en el build de producción ese bloque
+     termina concatenado después de este, pisando estas variables sin el
+     !important (en "pnpm dev" el orden de inyección de módulos CSS es
+     distinto y casualmente no se nota el conflicto). */
+  --sidebar-bg: #2c1810 !important;
+  --sidebar-text: #fbf6ef !important;
+  --sidebar-text-muted: #d8c3ae !important;
+  --sidebar-text-active: #ffffff !important;
+  --sidebar-hover-bg: rgba(251, 246, 239, 0.08) !important;
+  --sidebar-border: rgba(251, 246, 239, 0.12) !important;
+  --sidebar-border-right: none !important;
+  --sidebar-blur: none !important;
+  --sidebar-avatar-bg: #b5651d !important;
+  --sidebar-pinned-icon: #d4a24c !important;
 }
 
 * {
