@@ -3,7 +3,14 @@ import { configureApiClient } from 'anteriority-ui/common/api/client';
 // Mismo criterio de auto-detección que tenía el frontend anterior (ver README raíz,
 // sección "Guía de Pruebas Móviles"): si se accede por IP de red local o por un dev
 // tunnel, la API apunta al mismo host pero puerto/sufijo del backend.
+//
+// En producción (build de Vite) el backend vive en otro dominio (ej. Render), así
+// que se resuelve primero vía VITE_API_URL si está definida -- ver .env.production.
 function resolveBaseURL() {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
   const { hostname, protocol } = window.location;
 
   if (hostname === 'localhost' || hostname === '127.0.0.1') {

@@ -9,8 +9,11 @@ const sequelize = new Sequelize(
   process.env.DB_PASS,
   {
     host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306,
-    dialect: 'mysql',
+    port: process.env.DB_PORT || 5432,
+    dialect: 'postgres',
+    dialectOptions: process.env.DB_SSL === 'false' ? {} : {
+      ssl: { require: true, rejectUnauthorized: false }, // Supabase exige SSL
+    },
     logging: false, // Cambia a console.log si quieres ver los SQL generados en consola
     define: {
       timestamps: false, // Para que no agregue automáticamente createdAt/updatedAt si no los usas
@@ -22,14 +25,14 @@ const sequelize = new Sequelize(
 export const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log(' Conexión exitosa a MySQL (XAMPP)');
+    console.log(' Conexión exitosa a PostgreSQL (Supabase)');
     // Sincronizar automáticamente el esquema de DB (agregar columnas faltantes)
     await sequelize.sync({ alter: true });
     console.log(' Esquema de base de datos verificado y actualizado.');
 
     // Migración automática de roles
     try {
-      await sequelize.query("UPDATE USUARIO SET rol = 'ANALISTA_BIENES' WHERE rol = 'ADMINISTRADOR'");
+      await sequelize.query('UPDATE "USUARIO" SET rol = \'ANALISTA_BIENES\' WHERE rol = \'ADMINISTRADOR\'');
       console.log(' Migración de roles completada con éxito.');
     } catch (migError) {
       console.log(' Omitiendo actualización de roles (la tabla o campo ya se encuentra actualizado).');

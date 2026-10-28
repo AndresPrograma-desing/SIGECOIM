@@ -15,20 +15,32 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3003;
 
+// Dominio(s) de producción del frontend (ej. https://sigecoim.vercel.app), separados
+// por coma si hay más de uno. Se configura en el .env del backend (Render, etc.).
+const FRONTEND_URLS = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((url) => url.trim())
+  .filter(Boolean);
+
 // Middlewares
 app.use(cors({
   origin: function (origin, callback) {
     // Permitir peticiones sin origen (como scripts locales, apps móviles, curl, etc.)
     if (!origin) return callback(null, true);
-    
-    const isLocal = origin.includes('localhost') || 
-                    origin.includes('127.0.0.1') || 
+
+    const isLocal = origin.includes('localhost') ||
+                    origin.includes('127.0.0.1') ||
                     /^http:\/\/192\.168\.\d+\.\d+/.test(origin) ||
                     /^http:\/\/10\.\d+\.\d+\.\d+/.test(origin); // Rango de red local 10.x.x.x
-    
+
     const isDevTunnel = origin.includes('devtunnels.ms');
-    
-    if (isLocal || isDevTunnel) {
+
+    // Previews de Vercel (ej. sigecoim-git-feature-usuario.vercel.app) y el dominio
+    // de producción, además de cualquiera indicado explícitamente en FRONTEND_URL.
+    const isVercel = /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin);
+    const isAllowedFrontend = FRONTEND_URLS.includes(origin);
+
+    if (isLocal || isDevTunnel || isVercel || isAllowedFrontend) {
       callback(null, true);
     } else {
       callback(new Error('CORS no permitido para este origen por seguridad'), false);
