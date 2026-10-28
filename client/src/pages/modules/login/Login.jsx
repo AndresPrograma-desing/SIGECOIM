@@ -4,12 +4,10 @@ import { Eye, EyeOff, Guitar, Piano, Music2 } from 'lucide-react';
 import { TextField, Button, ErrorMessage } from 'anteriority-ui';
 import { useAuth } from '../../../context/AuthContext';
 import logo1 from '../../../assets/logo1.png';
-import logoDark from '../../../assets/login-logo-dark.png';
 import fotoNinos from '../../../assets/login-foto-ninos.png';
 
 const CAROUSEL_IMAGES = [
   { src: logo1, fit: 'contain' },
-  { src: logoDark, fit: 'contain' },
   { src: fotoNinos, fit: 'cover' },
 ];
 const CAROUSEL_INTERVAL_MS = 4000;
