@@ -6,6 +6,7 @@ import { Plus, Filter, FileDown } from 'lucide-react';
 import { getComodatos, createComodato, updateComodato, deleteComodato, registrarDevolucion } from '../../../services/comodatos';
 import { getEstudiantes } from '../../../services/estudiantes';
 import { getInstrumentos } from '../../../services/instrumentos';
+import { getConfiguracion } from '../../../services/configuracion';
 import { esMenorDeEdad } from '../../../utils/edad';
 import { tableColors, drawPanelColors } from '../../../theme/tokens';
 import { COMMON, COMODATOS as TXT, INSTRUMENTOS } from '../../../constants/text';
@@ -161,10 +162,11 @@ export default function Comodatos() {
     }
   };
 
-  const imprimirContrato = (comodato) => {
+  const imprimirContrato = async (comodato) => {
     setPdfError('');
     try {
-      generarContratoPDF(comodato);
+      const config = await getConfiguracion();
+      generarContratoPDF(comodato, { nombreNucleo: config.nombre_nucleo });
     } catch (err) {
       setPdfError(err.message || TXT.imprimirContratoError);
     }

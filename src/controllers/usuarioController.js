@@ -2,6 +2,10 @@ import bcrypt from 'bcryptjs';
 import { Usuario } from '../models/index.js';
 import { handleSequelizeError } from '../utils/sequelizeErrors.js';
 
+// rol es STRING (no ENUM) a propósito — ver el comentario en models/Usuario.js.
+// La validación de valores permitidos se hace acá en vez de a nivel de BD.
+export const ROLES_PERMITIDOS = ['ADMINISTRADOR', 'ANALISTA_BIENES', 'DIRECTOR'];
+
 // Obtener todos los usuarios (excluyendo la contraseña)
 export const getUsuarios = async (req, res) => {
   try {
@@ -25,6 +29,10 @@ export const createUsuario = async (req, res) => {
       return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios.' });
     }
 
+    if (rol && !ROLES_PERMITIDOS.includes(rol)) {
+      return res.status(400).json({ error: `Rol inválido. Debe ser uno de: ${ROLES_PERMITIDOS.join(', ')}.` });
+    }
+
     // Verificar si el correo ya existe
     const existeUsuario = await Usuario.findOne({ where: { email } });
     if (existeUsuario) {
@@ -40,7 +48,7 @@ export const createUsuario = async (req, res) => {
       nombre,
       email,
       password: hashedPassword,
-      rol: rol || 'COORDINADOR',
+      rol: rol || 'DIRECTOR',
       estado: true,
     });
 
@@ -110,7 +118,12 @@ export const updateUsuario = async (req, res) => {
     }
 
     if (nombre) usuario.nombre = nombre;
-    if (rol) usuario.rol = rol;
+    if (rol) {
+      if (!ROLES_PERMITIDOS.includes(rol)) {
+        return res.status(400).json({ error: `Rol inválido. Debe ser uno de: ${ROLES_PERMITIDOS.join(', ')}.` });
+      }
+      usuario.rol = rol;
+    }
 
     // Actualizar contraseña solo si se proporciona
     if (password && password.trim() !== '') {

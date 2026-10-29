@@ -95,11 +95,14 @@ export const createEstudiante = async (req, res) => {
           email: rep_email || null,
           direccion: rep_direccion
         });
+      } else if (
+        representante.nombre.trim().toLowerCase() !== rep_nombre.trim().toLowerCase() ||
+        representante.apellido.trim().toLowerCase() !== rep_apellido.trim().toLowerCase()
+      ) {
+        return res.status(400).json({ error: 'La cédula del representante ya está registrada a nombre de otra persona.' });
       } else {
-        // Actualizar datos del representante
+        // Mismo representante: actualizar sus datos de contacto
         await representante.update({
-          nombre: rep_nombre,
-          apellido: rep_apellido,
           telefono: rep_telefono,
           email: rep_email || null,
           direccion: rep_direccion
@@ -192,10 +195,14 @@ export const updateEstudiante = async (req, res) => {
           email: rep_email || null,
           direccion: rep_direccion
         });
+      } else if (
+        representante.nombre.trim().toLowerCase() !== rep_nombre.trim().toLowerCase() ||
+        representante.apellido.trim().toLowerCase() !== rep_apellido.trim().toLowerCase()
+      ) {
+        return res.status(400).json({ error: 'La cédula del representante ya está registrada a nombre de otra persona.' });
       } else {
+        // Mismo representante: actualizar sus datos de contacto
         await representante.update({
-          nombre: rep_nombre,
-          apellido: rep_apellido,
           telefono: rep_telefono,
           email: rep_email || null,
           direccion: rep_direccion

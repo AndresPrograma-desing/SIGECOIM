@@ -26,7 +26,7 @@ export const requireTipo = (...tipos) => (req, res, next) => {
   next();
 };
 
-// Restringe la ruta según el rol del usuario de staff (ANALISTA_BIENES, COORDINADOR)
+// Restringe la ruta según el rol del usuario de staff (ANALISTA_BIENES, DIRECTOR)
 export const requireRol = (...roles) => (req, res, next) => {
   if (!req.user || !roles.includes(req.user.rol)) {
     return res.status(403).json({ error: 'No tienes permisos para realizar esta acción.' });

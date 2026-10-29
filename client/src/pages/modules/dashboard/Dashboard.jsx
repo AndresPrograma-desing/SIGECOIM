@@ -109,7 +109,7 @@ export default function Dashboard() {
           <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, border: '1px solid #e2e8f0', borderRadius: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <PackageCheck size={18} color="#3e2723" />
-              <span style={{ fontSize: 14, color: '#3e2723', fontWeight: 600 }}>{row.tipo || '—'}</span>
+              <span style={{ fontSize: 14, color: '#3e2723', fontWeight: 600 }}>{row.nombre || '—'}</span>
             </div>
             <Badge label={row.estado_disponibilidad} value={row.total} />
           </div>

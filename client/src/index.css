@@ -69,3 +69,19 @@ button[class*='_userMenuItemDanger_']:hover {
 div[class*='_userMenuLinks_'] {
   border-top-color: #e3d4c2 !important;
 }
+
+/* Mismo problema que el bloque de arriba: el hover de los ítems de navegación del
+   Sidebar (SidebarItem/index.module.css) usa var(--sidebar-hover-bg), pero en
+   producción esa variable a veces resuelve al valor por defecto de la librería
+   (#f1f5f9, blanco grisáceo) en vez del override de :root de arriba. Se fuerza acá
+   por selector de clase, igual que con _userMenu_, para no depender del orden de
+   carga de los CSS Modules. */
+button[class*='_sidebarItemBtn_']:hover {
+  background-color: rgba(251, 246, 239, 0.08) !important;
+  color: #fbf6ef !important;
+}
+
+button[class*='_activeBtn_'] {
+  background-color: rgba(251, 246, 239, 0.14) !important;
+  color: #ffffff !important;
+}

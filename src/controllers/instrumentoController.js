@@ -2,13 +2,12 @@ import { Op, Sequelize } from 'sequelize';
 import { sequelize, Instrumento, HistorialUbicacion, Usuario } from '../models/index.js';
 import { handleSequelizeError } from '../utils/sequelizeErrors.js';
 
-// Listar todos los instrumentos (admite filtros opcionales ?ubicacion= y ?tipo=)
+// Listar todos los instrumentos (admite filtro opcional ?ubicacion=)
 export const getInstrumentos = async (req, res) => {
   try {
-    const { ubicacion, tipo } = req.query;
+    const { ubicacion } = req.query;
     const where = {};
     if (ubicacion) where.ubicacion = { [Op.like]: `%${ubicacion}%` };
-    if (tipo) where.tipo = tipo;
 
     const instrumentos = await Instrumento.findAll({
       where,
@@ -21,19 +20,16 @@ export const getInstrumentos = async (req, res) => {
   }
 };
 
-// Resumen de stock agrupado por tipo y disponibilidad.
-// NULLIF(tipo, '') unifica NULL y '' como un mismo grupo "sin tipo", por si
-// quedaron filas antiguas guardadas con string vacío en vez de NULL.
+// Resumen de stock agrupado por nombre de instrumento y disponibilidad.
 export const getStockPorTipo = async (req, res) => {
   try {
-    const tipoNormalizado = Sequelize.fn('NULLIF', Sequelize.col('tipo'), '');
     const stock = await Instrumento.findAll({
       attributes: [
-        [tipoNormalizado, 'tipo'],
+        'nombre',
         'estado_disponibilidad',
         [Sequelize.fn('COUNT', Sequelize.col('id')), 'total'],
       ],
-      group: [tipoNormalizado, 'estado_disponibilidad'],
+      group: ['nombre', 'estado_disponibilidad'],
       raw: true,
     });
     res.json(stock);
@@ -77,10 +73,10 @@ export const getInstrumentoById = async (req, res) => {
 // Crear un nuevo instrumento
 export const createInstrumento = async (req, res) => {
   try {
-    const { codigo_inventario, nombre, marca, modelo, numero_serie, medida, color, accesorios, tipo, ubicacion, estado_conservacion, estado_disponibilidad } = req.body;
+    const { codigo_inventario, nombre, marca, modelo, numero_serie, medida, color, accesorios, ubicacion, estado_conservacion, estado_disponibilidad } = req.body;
 
-    if (!codigo_inventario || !nombre) {
-      return res.status(400).json({ error: 'Código de inventario y nombre son campos requeridos' });
+    if (!codigo_inventario || !nombre || !numero_serie) {
+      return res.status(400).json({ error: 'Código de inventario, nombre y número de serie son campos requeridos' });
     }
 
     // Validar si ya existe el código de inventario
@@ -98,7 +94,6 @@ export const createInstrumento = async (req, res) => {
       medida,
       color,
       accesorios,
-      tipo: tipo || null,
       ubicacion: ubicacion || null,
       estado_conservacion: estado_conservacion || 'BUENO',
       estado_disponibilidad: estado_disponibilidad || 'DISPONIBLE',
@@ -116,7 +111,7 @@ export const updateInstrumento = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const { id } = req.params;
-    const { codigo_inventario, nombre, marca, modelo, numero_serie, medida, color, accesorios, tipo, ubicacion, estado_conservacion, estado_disponibilidad, usuario_id } = req.body;
+    const { codigo_inventario, nombre, marca, modelo, numero_serie, medida, color, accesorios, ubicacion, estado_conservacion, estado_disponibilidad, usuario_id } = req.body;
 
     const instrumento = await Instrumento.findByPk(id, { transaction: t });
     if (!instrumento) {
@@ -157,7 +152,6 @@ export const updateInstrumento = async (req, res) => {
       medida: medida !== undefined ? medida : instrumento.medida,
       color: color !== undefined ? color : instrumento.color,
       accesorios: accesorios !== undefined ? accesorios : instrumento.accesorios,
-      tipo: tipo !== undefined ? (tipo || null) : instrumento.tipo,
       ubicacion: ubicacion !== undefined ? ubicacion : instrumento.ubicacion,
       estado_conservacion: estado_conservacion || instrumento.estado_conservacion,
       estado_disponibilidad: estado_disponibilidad || instrumento.estado_disponibilidad,

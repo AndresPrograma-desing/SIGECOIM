@@ -109,7 +109,6 @@ export const INSTRUMENTOS = {
     color: 'Color',
     accesorios: 'Accesorios',
     accesoriosPlaceholder: 'Estuche, arco, boquilla...',
-    tipo: 'Tipo de instrumento',
     ubicacion: 'Ubicación física',
     ubicacionPlaceholder: 'Ej: Depósito A, Estante 3, Sala de ensayo...',
     estadoConservacion: 'Estado de conservación',
@@ -125,10 +124,10 @@ export const INSTRUMENTOS = {
     nueva: 'Ubicación nueva',
     usuario: 'Registrado por',
   },
-  stockPorTipoAction: 'Ver stock por tipo',
-  stockPorTipoTitle: 'Stock por tipo de instrumento',
-  stockPorTipoEmpty: 'Aún no hay instrumentos clasificados por tipo.',
-  stockPorTipoSinClasificar: 'Sin tipo asignado',
+  stockPorTipoAction: 'Ver stock por instrumento',
+  stockPorTipoTitle: 'Stock por instrumento',
+  stockPorTipoEmpty: 'Aún no hay instrumentos registrados.',
+  stockPorTipoSinClasificar: 'Sin nombre asignado',
   estadosConservacion: [
     { value: 'NUEVO', label: 'Nuevo' },
     { value: 'BUENO', label: 'Bueno' },
@@ -154,7 +153,7 @@ export const INSTRUMENTOS = {
         {
           value: 'PULSADAS',
           label: 'Pulsadas',
-          instrumentos: ['Arpa', 'Guitarra'],
+          instrumentos: ['Cuatro'],
         },
       ],
     },
@@ -196,29 +195,6 @@ export const INSTRUMENTOS = {
         },
       ],
     },
-  ],
-  // Catálogo fijo de tipos para clasificar y agrupar el stock (HU-25/HU-27).
-  // Se deriva de los mismos instrumentos típicos ya listados en "familias".
-  tiposInstrumento: [
-    { value: 'Violín', label: 'Violín' },
-    { value: 'Viola', label: 'Viola' },
-    { value: 'Violonchelo', label: 'Violonchelo' },
-    { value: 'Contrabajo', label: 'Contrabajo' },
-    { value: 'Arpa', label: 'Arpa' },
-    { value: 'Guitarra', label: 'Guitarra' },
-    { value: 'Flauta traversa', label: 'Flauta traversa' },
-    { value: 'Oboe', label: 'Oboe' },
-    { value: 'Clarinete', label: 'Clarinete' },
-    { value: 'Fagot', label: 'Fagot' },
-    { value: 'Trompeta', label: 'Trompeta' },
-    { value: 'Corno francés', label: 'Corno francés' },
-    { value: 'Trombón', label: 'Trombón' },
-    { value: 'Tuba', label: 'Tuba' },
-    { value: 'Timbales', label: 'Timbales' },
-    { value: 'Xilófono', label: 'Xilófono' },
-    { value: 'Redoblante', label: 'Redoblante' },
-    { value: 'Platillos', label: 'Platillos' },
-    { value: 'Triángulo', label: 'Triángulo' },
   ],
 };
 
@@ -321,6 +297,8 @@ export const CONFIGURACION = {
   diasAlertaLabel: 'Días de anticipación de alertas',
   diasAlertaHelper: 'Cantidad de días, antes de la devolución prevista, a partir de los cuales un comodato aparece como "por vencer" en Alertas y Reportes.',
   diasAlertaError: 'Debe ser un número entero entre 1 y 365.',
+  nombreNucleoLabel: 'Nombre del Núcleo',
+  nombreNucleoHelper: 'Nombre del Núcleo que se imprime en el contrato de comodato (ej. "Núcleo José Félix Rivas").',
   saveButton: 'Guardar cambios',
 };
 
@@ -356,9 +334,8 @@ export const USUARIOS = {
     inactivo: 'Inactivo',
   },
   roles: [
-    { value: 'ADMINISTRADOR', label: 'Administrador' },
     { value: 'ANALISTA_BIENES', label: 'Analista de Bienes' },
-    { value: 'COORDINADOR', label: 'Coordinador' },
+    { value: 'DIRECTOR', label: 'Director' },
   ],
 };
 

@@ -23,10 +23,18 @@ const Usuario = sequelize.define('USUARIO', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
+  // STRING en vez de ENUM a propósito: con sync({ alter: true }) (ver db.js),
+  // Sequelize re-ejecuta "ALTER COLUMN ... SET DEFAULT" seguido de
+  // "ALTER COLUMN ... TYPE enum... USING (...)" en CADA arranque para
+  // cualquier columna ENUM, y Postgres no puede re-castear ese default recién
+  // puesto durante el cambio de tipo ("default for column rol cannot be cast
+  // automatically to type enum_USUARIO_rol") — rompe el boot apenas el ENUM
+  // cambia de valores. Los valores permitidos (ROLES_PERMITIDOS) se validan
+  // en usuarioController.js en su lugar.
   rol: {
-    type: DataTypes.ENUM('ADMINISTRADOR', 'ANALISTA_BIENES', 'COORDINADOR'),
+    type: DataTypes.STRING(30),
     allowNull: false,
-    defaultValue: 'COORDINADOR',
+    defaultValue: 'DIRECTOR',
   },
   estado: {
     type: DataTypes.BOOLEAN,

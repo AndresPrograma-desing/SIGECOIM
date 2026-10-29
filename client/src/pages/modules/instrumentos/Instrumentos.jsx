@@ -23,7 +23,6 @@ const FORM_INICIAL = {
   medida: '',
   color: '',
   accesorios: '',
-  tipo: '',
   ubicacion: '',
   estado_conservacion: 'BUENO',
   estado_disponibilidad: 'DISPONIBLE',
@@ -101,7 +100,6 @@ export default function Instrumentos() {
       medida: instrumento.medida || '',
       color: instrumento.color || '',
       accesorios: instrumento.accesorios || '',
-      tipo: instrumento.tipo || '',
       ubicacion: instrumento.ubicacion || '',
       estado_conservacion: instrumento.estado_conservacion || 'BUENO',
       estado_disponibilidad: instrumento.estado_disponibilidad || 'DISPONIBLE',
@@ -274,7 +272,7 @@ export default function Instrumentos() {
         loading={saving}
         progressMode="form"
         formData={formData}
-        requiredFields={['codigo_inventario', 'nombre']}
+        requiredFields={['codigo_inventario', 'nombre', 'numero_serie']}
       >
         <form
           id="form-instrumento"
@@ -314,16 +312,10 @@ export default function Instrumentos() {
           )}
           <TextField label={TXT.fields.marca} name="marca" value={formData.marca} onChange={handleChange} placeholder={TXT.fields.marcaPlaceholder} />
           <TextField label={TXT.fields.modelo} name="modelo" value={formData.modelo} onChange={handleChange} />
-          <TextField label={TXT.fields.numeroSerie} name="numero_serie" value={formData.numero_serie} onChange={handleChange} />
+          <TextField label={TXT.fields.numeroSerie} name="numero_serie" value={formData.numero_serie} onChange={handleChange} required />
           <TextField label={TXT.fields.medida} name="medida" value={formData.medida} onChange={handleChange} placeholder={TXT.fields.medidaPlaceholder} />
           <TextField label={TXT.fields.color} name="color" value={formData.color} onChange={handleChange} />
           <TextField label={TXT.fields.accesorios} name="accesorios" value={formData.accesorios} onChange={handleChange} placeholder={TXT.fields.accesoriosPlaceholder} />
-          <Selector
-            label={TXT.fields.tipo}
-            options={TXT.tiposInstrumento}
-            value={formData.tipo}
-            onChange={(e) => handleChange({ target: { name: 'tipo', value: e.target.value } })}
-          />
           <TextField label={TXT.fields.ubicacion} name="ubicacion" value={formData.ubicacion} onChange={handleChange} placeholder={TXT.fields.ubicacionPlaceholder} />
           <Selector
             label={TXT.fields.estadoConservacion}
@@ -384,7 +376,7 @@ export default function Instrumentos() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <PackageCheck size={18} color="#3e2723" />
                 <span style={{ fontSize: 14, color: '#3e2723', fontWeight: 600 }}>
-                  {row.tipo || TXT.stockPorTipoSinClasificar}
+                  {row.nombre || TXT.stockPorTipoSinClasificar}
                 </span>
               </div>
               <Badge label={row.estado_disponibilidad} value={row.total} />

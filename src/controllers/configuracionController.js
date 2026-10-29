@@ -4,6 +4,7 @@ import { Configuracion } from '../models/index.js';
 // todavía no existe en base de datos (primer arranque del sistema).
 const DEFAULTS = {
   dias_alerta_vencimiento: '7',
+  nombre_nucleo: '',
 };
 
 export const CLAVES_PERMITIDAS = Object.keys(DEFAULTS);

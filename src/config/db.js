@@ -26,13 +26,17 @@ export const connectDB = async () => {
   try {
     await sequelize.authenticate();
     console.log(' Conexión exitosa a PostgreSQL (Supabase)');
+
     // Sincronizar automáticamente el esquema de DB (agregar columnas faltantes)
     await sequelize.sync({ alter: true });
     console.log(' Esquema de base de datos verificado y actualizado.');
 
-    // Migración automática de roles
+    // Migraciones automáticas de datos de roles. USUARIO.rol es STRING (no
+    // ENUM) a propósito — ver el comentario en models/Usuario.js — así que
+    // estos UPDATE son simples y no interactúan con sync({ alter: true }).
     try {
       await sequelize.query('UPDATE "USUARIO" SET rol = \'ANALISTA_BIENES\' WHERE rol = \'ADMINISTRADOR\'');
+      await sequelize.query('UPDATE "USUARIO" SET rol = \'DIRECTOR\' WHERE rol = \'COORDINADOR\'');
       console.log(' Migración de roles completada con éxito.');
     } catch (migError) {
       console.log(' Omitiendo actualización de roles (la tabla o campo ya se encuentra actualizado).');

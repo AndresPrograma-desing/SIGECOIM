@@ -13,7 +13,7 @@ const FORM_INICIAL = {
   nombre: '',
   email: '',
   password: '',
-  rol: 'COORDINADOR',
+  rol: 'DIRECTOR',
 };
 
 export default function Usuarios() {
@@ -56,7 +56,7 @@ export default function Usuarios() {
 
   const abrirEditar = (usuario) => {
     setEditando(usuario);
-    setFormData({ nombre: usuario.nombre || '', email: usuario.email || '', password: '', rol: usuario.rol || 'COORDINADOR' });
+    setFormData({ nombre: usuario.nombre || '', email: usuario.email || '', password: '', rol: usuario.rol || 'DIRECTOR' });
     setFormError('');
     setPanelOpen(true);
   };
