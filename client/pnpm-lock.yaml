@@ -18,8 +18,8 @@ importers:
         specifier: ^9.4.0
         version: 9.5.0(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       anteriority-ui:
-        specifier: ^1.13.0
-        version: 1.13.0(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@mui/material@9.5.0(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@plasmicapp/host@2.0.21(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@rjsf/core@5.24.13(@rjsf/utils@5.24.13(react@19.3.1))(react@19.3.1))(@rjsf/utils@5.24.13(react@19.3.1))(@types/react@19.3.0)(pdfjs-dist@6.4.299)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)
+        specifier: ^1.14.2
+        version: 1.14.2(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@mui/material@9.5.0(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@plasmicapp/host@2.0.21(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@rjsf/core@5.24.13(@rjsf/utils@5.24.13(react@19.3.1))(react@19.3.1))(@rjsf/utils@5.24.13(react@19.3.1))(@types/react@19.3.0)(pdfjs-dist@6.4.299)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1)
       jspdf:
         specifier: ^4.2.1
         version: 4.2.1
@@ -1091,8 +1091,8 @@ packages:
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
 
-  anteriority-ui@1.13.0:
-    resolution: {integrity: sha512-OOYi/r9XC9Ym3lLSHAQ3n3z41hngxE8lWLRTvjv2eAt8K292G/5fJI5XQTBqemQXmsFRf2NrNDBlMO65IU2kIQ==}
+  anteriority-ui@1.14.2:
+    resolution: {integrity: sha512-CIuGCTaxu+Z4H+W4lmyE+XpXvw7u0Mw24YBh5vDYeSDRk5jIIBJJSni0MVS3pFc4tbohyVC1ogxhc8RDYHjVuA==}
     peerDependencies:
       '@emotion/react': ^11.0.0
       '@emotion/styled': ^11.0.0
@@ -3506,7 +3506,7 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  anteriority-ui@1.13.0(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@mui/material@9.5.0(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@plasmicapp/host@2.0.21(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@rjsf/core@5.24.13(@rjsf/utils@5.24.13(react@19.3.1))(react@19.3.1))(@rjsf/utils@5.24.13(react@19.3.1))(@types/react@19.3.0)(pdfjs-dist@6.4.299)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1):
+  anteriority-ui@1.14.2(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@mui/material@9.5.0(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@plasmicapp/host@2.0.21(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@rjsf/core@5.24.13(@rjsf/utils@5.24.13(react@19.3.1))(react@19.3.1))(@rjsf/utils@5.24.13(react@19.3.1))(@types/react@19.3.0)(pdfjs-dist@6.4.299)(react-dom@19.3.1(react@19.3.1))(react-is@19.3.1)(react@19.3.1)(redux@5.0.1):
     dependencies:
       '@emotion/react': 11.14.0(@types/react@19.3.0)(react@19.3.1)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(react@19.3.1)

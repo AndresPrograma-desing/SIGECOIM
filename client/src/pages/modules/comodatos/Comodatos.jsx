@@ -361,6 +361,7 @@ export default function Comodatos() {
             name="fecha_inicio"
             value={formData.fecha_inicio}
             onChange={handleChange}
+            selectorsPopperZIndex={200000}
           />
           <CalendarPicker
             label={TXT.fields.fechaDevolucionPrevista}
@@ -368,6 +369,7 @@ export default function Comodatos() {
             value={formData.fecha_devolucion_prevista}
             onChange={handleChange}
             required
+            selectorsPopperZIndex={200000}
           />
 
           <Selector
@@ -416,12 +418,14 @@ export default function Comodatos() {
             name="desde"
             value={filtros.desde}
             onChange={handleFiltroChange}
+            selectorsPopperZIndex={200000}
           />
           <CalendarPicker
             label={TXT.fields.hasta}
             name="hasta"
             value={filtros.hasta}
             onChange={handleFiltroChange}
+            selectorsPopperZIndex={200000}
           />
           <Selector
             label={TXT.columns.estado}

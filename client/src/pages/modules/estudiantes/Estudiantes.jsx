@@ -229,6 +229,7 @@ export default function Estudiantes() {
             value={formData.fecha_nacimiento}
             onChange={handleChange}
             required
+            selectorsPopperZIndex={200000}
           />
           <TextField label={TXT.fields.telefono} name="telefono" value={formData.telefono} onChange={handleChange} />
           <TextField label={TXT.fields.direccion} name="direccion" value={formData.direccion} onChange={handleChange} />

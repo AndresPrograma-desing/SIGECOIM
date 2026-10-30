@@ -1,4 +1,6 @@
 allowBuilds:
   core-js: true
+minimumReleaseAgeExclude:
+  - anteriority-ui@1.14.0 || 1.14.1 || 1.14.2
 onlyBuiltDependencies:
   - core-js
