@@ -6,7 +6,6 @@ import { CONFIGURACION as TXT } from '../../../constants/text';
 
 export default function Configuracion() {
   const [diasAlerta, setDiasAlerta] = useState('7');
-  const [nombreNucleo, setNombreNucleo] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -19,7 +18,6 @@ export default function Configuracion() {
     try {
       const config = await getConfiguracion();
       setDiasAlerta(String(config.dias_alerta_vencimiento ?? '7'));
-      setNombreNucleo(config.nombre_nucleo ?? '');
     } catch (err) {
       setLoadError(err.message || TXT.loadError);
     } finally {
@@ -44,7 +42,7 @@ export default function Configuracion() {
 
     setSaving(true);
     try {
-      await updateConfiguracion({ dias_alerta_vencimiento: dias, nombre_nucleo: nombreNucleo });
+      await updateConfiguracion({ dias_alerta_vencimiento: dias });
       setSaveSuccess(true);
     } catch (err) {
       setSaveError(err.message || TXT.saveError);
@@ -80,16 +78,6 @@ export default function Configuracion() {
             min={1}
             max={365}
             step={1}
-          />
-
-          <Input
-            label={TXT.nombreNucleoLabel}
-            value={nombreNucleo}
-            onChange={(e) => {
-              setNombreNucleo(e.target.value);
-              setSaveSuccess(false);
-            }}
-            helperText={TXT.nombreNucleoHelper}
           />
 
           <Button type="submit" variant="primary" loading={saving}>

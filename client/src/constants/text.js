@@ -297,8 +297,6 @@ export const CONFIGURACION = {
   diasAlertaLabel: 'Días de anticipación de alertas',
   diasAlertaHelper: 'Cantidad de días, antes de la devolución prevista, a partir de los cuales un comodato aparece como "por vencer" en Alertas y Reportes.',
   diasAlertaError: 'Debe ser un número entero entre 1 y 365.',
-  nombreNucleoLabel: 'Nombre del Núcleo',
-  nombreNucleoHelper: 'Nombre del Núcleo que se imprime en el contrato de comodato (ej. "Núcleo José Félix Rivas").',
   saveButton: 'Guardar cambios',
 };
 

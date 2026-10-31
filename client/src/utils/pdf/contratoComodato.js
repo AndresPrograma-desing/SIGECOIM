@@ -48,13 +48,12 @@ const DISPOSICIONES = [
 // Contrato de Comodato — réplica fiel del texto legal de las plantillas .doc
 // originales ("... MAYOR DE EDAD (2025).doc" / "... MENOR DE EDAD (2025).doc"),
 // con los datos dinámicos del comodato insertados en los espacios en blanco.
-export function generarContratoPDF(comodato, opciones = {}) {
+export function generarContratoPDF(comodato) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const estudiante = comodato.estudiante;
   const instrumento = comodato.instrumento;
   const representante = estudiante?.representante;
   const esMenor = esMenorDeEdad(estudiante?.fecha_nacimiento);
-  const nombreNucleo = opciones.nombreNucleo?.trim() || '___________________________________';
   const { dia, mes, anio } = fechaEnPalabras(comodato.fecha_inicio);
 
   let y = 20;
@@ -98,11 +97,11 @@ export function generarContratoPDF(comodato, opciones = {}) {
     const repNombre = `${representante.nombre ?? ''} ${representante.apellido ?? ''}`.trim() || '___________________________________';
     const repCedula = representante.cedula || '__________________';
     writeParagraph(
-      `Entre EL NÚCLEO, ${nombreNucleo} quien a los efectos del presente documento se denominará EL NÚCLEO, por una parte, y por la otra el (la) ciudadano (a) ${repNombre}, venezolano (a), mayor de edad, de este domicilio, titular de la cédula de identidad Nro. ${repCedula}, en su carácter de Representante Legal del niño o adolescente ${estudianteNombre} titular de la cédula de identidad Nro. ${estudianteCedula}, integrante del Núcleo ${nombreNucleo}, y quien en lo adelante se denominará EL COMODATARIO, hemos convenido en celebrar el presente contrato de comodato, con el fin de hacer entrega al último de los mencionados en calidad de Comodato, el siguiente instrumento musical, el cual en lo adelante a los solos efectos del presente documento se identificará como EL BIEN:`,
+      `Entre EL NÚCLEO SOCOPO, quien a los efectos del presente documento se denominará EL NÚCLEO, por una parte, y por la otra el (la) ciudadano (a) ${repNombre}, venezolano (a), mayor de edad, de este domicilio, titular de la cédula de identidad Nro. ${repCedula}, en su carácter de Representante Legal del niño o adolescente ${estudianteNombre} titular de la cédula de identidad Nro. ${estudianteCedula}, integrante de EL NÚCLEO SOCOPO, y quien en lo adelante se denominará EL COMODATARIO, hemos convenido en celebrar el presente contrato de comodato, con el fin de hacer entrega al último de los mencionados en calidad de Comodato, el siguiente instrumento musical, el cual en lo adelante a los solos efectos del presente documento se identificará como EL BIEN:`,
     );
   } else {
     writeParagraph(
-      `Entre EL NÚCLEO, ${nombreNucleo} quien a los efectos del presente documento se denominará EL NÚCLEO, por una parte, y por la otra el (la) ciudadano (a) ${estudianteNombre}, venezolano (a), mayor de edad, de este domicilio, titular de la cédula de identidad Nro. ${estudianteCedula}, integrante del Núcleo ${nombreNucleo}, y quien en lo adelante se denominará EL COMODATARIO, hemos convenido en celebrar el presente contrato de comodato, con el fin de hacer entrega al último de los mencionados en calidad de Comodato, el siguiente instrumento musical, el cual en lo adelante a los solos efectos del presente documento se identificará como EL BIEN:`,
+      `Entre EL NÚCLEO SOCOPO, quien a los efectos del presente documento se denominará EL NÚCLEO, por una parte, y por la otra el (la) ciudadano (a) ${estudianteNombre}, venezolano (a), mayor de edad, de este domicilio, titular de la cédula de identidad Nro. ${estudianteCedula}, integrante de EL NÚCLEO SOCOPO, y quien en lo adelante se denominará EL COMODATARIO, hemos convenido en celebrar el presente contrato de comodato, con el fin de hacer entrega al último de los mencionados en calidad de Comodato, el siguiente instrumento musical, el cual en lo adelante a los solos efectos del presente documento se identificará como EL BIEN:`,
     );
   }
 
