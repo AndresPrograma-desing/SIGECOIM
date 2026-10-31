@@ -33,3 +33,8 @@ export const requireRol = (...roles) => (req, res, next) => {
   }
   next();
 };
+
+// Roles con permiso de escritura. El DIRECTOR es de solo consulta y supervisión
+// (reportes, expedientes, trazabilidad); ADMINISTRADOR es el nombre legado de ANALISTA_BIENES.
+export const ROLES_ESCRITURA = ['ANALISTA_BIENES', 'ADMINISTRADOR'];
+export const soloEscritura = requireRol(...ROLES_ESCRITURA);

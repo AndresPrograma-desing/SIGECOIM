@@ -100,7 +100,7 @@ export const getRepresentantesPorVencer = async (req, res) => {
         {
           model: Estudiante,
           as: 'estudiante',
-          attributes: ['id', 'nombre', 'apellido'],
+          attributes: ['id', 'nombre', 'apellido', 'telefono'],
           include: [{ model: Representante, as: 'representante', attributes: ['id', 'nombre', 'apellido', 'telefono'] }],
         },
         { model: Instrumento, as: 'instrumento', attributes: ['id', 'nombre', 'codigo_inventario'] },

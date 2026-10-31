@@ -34,8 +34,11 @@ export function AuthProvider({ children }) {
 
   const puedeAdministrarUsuarios = usuario?.rol === 'ADMINISTRADOR' || usuario?.rol === 'ANALISTA_BIENES';
 
+  // El Director es un rol de consulta y supervisión: solo lectura, reportes y PDF.
+  const puedeEditar = puedeAdministrarUsuarios;
+
   const value = useMemo(
-    () => ({ usuario, login, logout, puedeAdministrarUsuarios }),
+    () => ({ usuario, login, logout, puedeAdministrarUsuarios, puedeEditar }),
     [usuario],
   );
 

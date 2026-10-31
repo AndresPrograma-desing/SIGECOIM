@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, CalendarPicker, MultilinePlaceholder } from 'anteriority-ui';
+import { useAuth } from '../../../context/AuthContext';
+import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, MultilinePlaceholder } from 'anteriority-ui';
 import FormMessage from '../../../components/FormMessage';
+import DateField from '../../../components/DateField';
 import { Plus, Filter, FileDown } from 'lucide-react';
 import { getComodatos, createComodato, updateComodato, deleteComodato, registrarDevolucion } from '../../../services/comodatos';
 import { getEstudiantes } from '../../../services/estudiantes';
@@ -39,6 +41,7 @@ function badgeTypeEstado(row) {
 
 export default function Comodatos() {
   const { search } = useOutletContext() ?? {};
+  const { puedeEditar } = useAuth();
   const [comodatos, setComodatos] = useState([]);
   const [estudiantes, setEstudiantes] = useState([]);
   const [instrumentos, setInstrumentos] = useState([]);
@@ -258,33 +261,41 @@ export default function Comodatos() {
         label: COMMON.actions,
         type: 'actions',
         actions: [
-          { label: TXT.registrarDevolucion, onClick: abrirDevolucion, disabled: (row) => row.estado !== 'ACTIVO' },
+          ...(puedeEditar
+            ? [{ label: TXT.registrarDevolucion, onClick: abrirDevolucion, disabled: (row) => row.estado !== 'ACTIVO' }]
+            : []),
           { label: TXT.imprimirContrato, onClick: imprimirContrato },
-          { label: COMMON.edit, onClick: abrirEditar, disabled: (row) => row.estado !== 'ACTIVO' },
-          { label: COMMON.delete, onClick: setAEliminar },
+          ...(puedeEditar
+            ? [
+                { label: COMMON.edit, onClick: abrirEditar, disabled: (row) => row.estado !== 'ACTIVO' },
+                { label: COMMON.delete, onClick: setAEliminar },
+              ]
+            : []),
         ],
       },
     ],
-    [filtroEstado],
+    [filtroEstado, puedeEditar],
   );
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 28, color: '#3e2723' }}>{TXT.pageTitle}</h1>
           <p style={{ margin: '4px 0 0', color: '#8d7566' }}>{TXT.pageSubtitle}</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           <Button variant="outline" icon={Filter} onClick={() => setFiltrosOpen(true)}>
             {TXT.filtrosAvanzadosAction}
           </Button>
           <Button variant="outline" icon={FileDown} onClick={exportarPdf}>
             {TXT.exportarPdf}
           </Button>
-          <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
-            {TXT.newButton}
-          </Button>
+          {puedeEditar && (
+            <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
+              {TXT.newButton}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -356,14 +367,14 @@ export default function Comodatos() {
             required
           />
 
-          <CalendarPicker
+          <DateField
             label={TXT.fields.fechaInicio}
             name="fecha_inicio"
             value={formData.fecha_inicio}
             onChange={handleChange}
             selectorsPopperZIndex={200000}
           />
-          <CalendarPicker
+          <DateField
             label={TXT.fields.fechaDevolucionPrevista}
             name="fecha_devolucion_prevista"
             value={formData.fecha_devolucion_prevista}
@@ -413,14 +424,14 @@ export default function Comodatos() {
             value={filtros.instrumento_id}
             onChange={(e) => handleFiltroChange({ target: { name: 'instrumento_id', value: e.target.value } })}
           />
-          <CalendarPicker
+          <DateField
             label={TXT.fields.desde}
             name="desde"
             value={filtros.desde}
             onChange={handleFiltroChange}
             selectorsPopperZIndex={200000}
           />
-          <CalendarPicker
+          <DateField
             label={TXT.fields.hasta}
             name="hasta"
             value={filtros.hasta}

@@ -8,3 +8,22 @@
   height: 100% !important;
   max-height: 100% !important;
 }
+
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 32px;
+  background: #fbf6ef;
+}
+
+@media (max-width: 767px) {
+  .main {
+    padding: 16px;
+  }
+
+  /* Los encabezados de página (título + botones) pasan a apilarse en pantallas chicas. */
+  .main h1 {
+    font-size: 22px !important;
+  }
+}

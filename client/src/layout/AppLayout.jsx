@@ -14,6 +14,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notificationsRef = useRef(null);
 
@@ -43,8 +44,13 @@ export default function AppLayout() {
       <Sidebar
         groups={[{ items }]}
         activeId={activeItem?.id}
-        onSelect={(item) => navigate(item.path)}
+        onSelect={(item) => {
+          navigate(item.path);
+          setMobileMenuOpen(false);
+        }}
         collapsible={false}
+        isMobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
         headerContent={
           <div
             style={{
@@ -68,6 +74,7 @@ export default function AppLayout() {
       <div style={{ flex: 1, minWidth: 0, maxWidth: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
         <TopBar
           title={activeItem?.label}
+          onMenuClick={() => setMobileMenuOpen(true)}
           searchProps={{
             value: search,
             onChange: (e) => setSearch(e.target.value),
@@ -107,7 +114,7 @@ export default function AppLayout() {
           </div>
         )}
 
-        <main style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '32px', background: '#fbf6ef' }}>
+        <main className={styles.main}>
           <Outlet context={{ search }} />
         </main>
       </div>

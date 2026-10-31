@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { TableB, DrawPanel, AlertModal, Button, TextField, CalendarPicker } from 'anteriority-ui';
+import { TableB, DrawPanel, AlertModal, Button, TextField } from 'anteriority-ui';
 import FormMessage from '../../../components/FormMessage';
+import DateField from '../../../components/DateField';
+import { useAuth } from '../../../context/AuthContext';
 import { Plus } from 'lucide-react';
 import { getEstudiantes, createEstudiante, updateEstudiante, deleteEstudiante } from '../../../services/estudiantes';
 import { calcularEdad, esMenorDeEdad, esFechaFutura } from '../../../utils/edad';
@@ -25,6 +27,7 @@ const FORM_INICIAL = {
 
 export default function Estudiantes() {
   const { search } = useOutletContext() ?? {};
+  const { puedeEditar } = useAuth();
   const [estudiantes, setEstudiantes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -139,13 +142,15 @@ export default function Estudiantes() {
         key: 'actions',
         label: COMMON.actions,
         type: 'actions',
-        actions: [
-          { label: COMMON.edit, onClick: abrirEditar },
-          { label: COMMON.delete, onClick: setAEliminar },
-        ],
+        actions: puedeEditar
+          ? [
+              { label: COMMON.edit, onClick: abrirEditar },
+              { label: COMMON.delete, onClick: setAEliminar },
+            ]
+          : [],
       },
     ],
-    [],
+    [puedeEditar],
   );
 
   const requiredFields = esMenor
@@ -160,14 +165,16 @@ export default function Estudiantes() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 28, color: '#3e2723' }}>{TXT.pageTitle}</h1>
           <p style={{ margin: '4px 0 0', color: '#8d7566' }}>{TXT.pageSubtitle}</p>
         </div>
-        <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
-          {TXT.newButton}
-        </Button>
+        {puedeEditar && (
+          <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
+            {TXT.newButton}
+          </Button>
+        )}
       </div>
 
       <TableB
@@ -223,7 +230,7 @@ export default function Estudiantes() {
             onChange={handleChange}
              required 
              />
-          <CalendarPicker
+          <DateField
             label={TXT.fields.fechaNacimiento}
             name="fecha_nacimiento"
             value={formData.fecha_nacimiento}

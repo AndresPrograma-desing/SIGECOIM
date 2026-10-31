@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import { TableB, DrawPanel, AlertModal, Button, TextField, Selector, Badge } from 'anteriority-ui';
 import { Plus, LayoutGrid, MapPin, PackageCheck } from 'lucide-react';
 import FormMessage from '../../../components/FormMessage';
@@ -40,6 +41,7 @@ function badgeTypeDisponibilidad(row) {
 
 export default function Instrumentos() {
   const { search } = useOutletContext() ?? {};
+  const { puedeEditar } = useAuth();
   const [instrumentos, setInstrumentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -224,28 +226,34 @@ export default function Instrumentos() {
         type: 'actions',
         actions: [
           { label: TXT.historialUbicacionAction, onClick: abrirHistorial },
-          { label: COMMON.edit, onClick: abrirEditar },
-          { label: COMMON.delete, onClick: setAEliminar },
+          ...(puedeEditar
+            ? [
+                { label: COMMON.edit, onClick: abrirEditar },
+                { label: COMMON.delete, onClick: setAEliminar },
+              ]
+            : []),
         ],
       },
     ],
-    [filtroDisponibilidad],
+    [filtroDisponibilidad, puedeEditar],
   );
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 28, color: '#3e2723' }}>{TXT.pageTitle}</h1>
           <p style={{ margin: '4px 0 0', color: '#8d7566' }}>{TXT.pageSubtitle}</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           <Button variant="outline" icon={LayoutGrid} onClick={abrirStock}>
             {TXT.stockPorTipoAction}
           </Button>
-          <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
-            {TXT.newButton}
-          </Button>
+          {puedeEditar && (
+            <Button variant="primary" icon={Plus} onClick={abrirNuevo}>
+              {TXT.newButton}
+            </Button>
+          )}
         </div>
       </div>
 

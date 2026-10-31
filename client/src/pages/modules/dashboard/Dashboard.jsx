@@ -63,7 +63,8 @@ export default function Dashboard() {
       {
         key: 'telefono',
         label: TXT.alertasColumns.telefono,
-        render: (row) => row.estudiante?.representante?.telefono || COMMON.notAvailable,
+        // Los estudiantes mayores de edad no tienen representante: se usa su propio teléfono.
+        render: (row) => row.estudiante?.representante?.telefono || row.estudiante?.telefono || COMMON.notAvailable,
       },
       { key: 'fecha_devolucion_prevista', label: TXT.alertasColumns.fechaPrevista },
       {
